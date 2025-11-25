@@ -135,17 +135,20 @@ export async function getVehicles() {
 export async function getVehicleData(vehicleId: string) {
     const accessToken = (await cookies()).get('tesla_access_token')?.value;
     if (!accessToken) {
-        console.error("Unauthorized: No access token found");
-        return null;
+        return { success: false, error: "Unauthorized" };
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
     if (!baseUrl) {
-        console.error("API base URL is not configured.");
-        return null;
+        return { success: false, error: "API base URL is not configured." };
     }
 
     try {
+        const wakeUpResult = await wakeUpVehicle(vehicleId);
+        if (!wakeUpResult.success) {
+            return { success: false, error: "Vehicle is offline and could not be woken up." };
+        }
+
         const response = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}/vehicle_data?endpoints=vehicle_data_combo`, {
             method: 'GET',
             headers: {
@@ -156,16 +159,16 @@ export async function getVehicleData(vehicleId: string) {
 
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({ error: "Unknown API error" }));
-            console.error('Get vehicle data error:', errorBody);
-            return null;
+            return { success: false, error: errorBody.error || "Unknown API error" };
         }
         
         const data = await response.json();
-        return data.response;
+        return { success: true, data: data.response };
 
     } catch (error) {
         console.error("Get vehicle data fetch error:", error);
-        return null;
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return { success: false, error: `Failed to fetch vehicle data. Reason: ${errorMessage}` };
     }
 }
 
