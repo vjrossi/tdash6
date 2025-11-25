@@ -13,9 +13,6 @@ export default async function DashboardPage() {
             <header className="w-full max-w-7xl mx-auto flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-cyan-400">T-Dash</h1>
                 <div className="flex items-center space-x-4">
-                    <Link href="/testbed" className="text-sm text-gray-400 hover:text-cyan-400 transition-colors">
-                        API Testbed
-                    </Link>
                     <LogoutButton />
                 </div>
             </header>

@@ -1,21 +1,21 @@
-import { Suspense } from 'react'
-import CallbackClientPage from './client-page'
+import { Suspense } from 'react';
+import CallbackClientPage from './client-page';
 
 function Loading() {
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-            <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-center py-32 px-16 bg-white dark:bg-black sm:items-start">
-                <h1 className="text-2xl font-semibold">Authenticating...</h1>
-                <p>Please wait while we log you in.</p>
-            </main>
-        </div>
-    )
+  return (
+    <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-4">Loading...</h1>
+        <p className="text-gray-400">Waiting for authorization from Tesla...</p>
+      </div>
+    </div>
+  );
 }
 
 export default function CallbackPage() {
   return (
-    <Suspense fallback={<Loading/>}>
+    <Suspense fallback={<Loading />}>
       <CallbackClientPage />
     </Suspense>
-  )
+  );
 }

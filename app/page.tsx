@@ -5,7 +5,7 @@ import Image from "next/image";
 export default function Home() {
   const handleLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_TESLA_CLIENT_ID;
-    const redirectUri = process.env.NEXT_PUBLIC_TESLA_REDIRECT_URI;
+    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/callback`;
     const scope = 'openid vehicle_device_data vehicle_cmds vehicle_charging_cmds';
     const responseType = 'code';
     const state = 'your_random_state'; // In a real app, you would generate a secure random string

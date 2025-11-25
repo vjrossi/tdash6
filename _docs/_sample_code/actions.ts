@@ -4,9 +4,6 @@ import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { mockVehicles, mockVehicleData } from '@/lib/mock-data';
-
-const useTestMode = process.env.NEXT_PUBLIC_TEST_MODE === 'true';
 
 // --- AUTHENTICATION ACTIONS ---
 
@@ -37,11 +34,6 @@ export async function exchangeCodeForToken(code: string) {
 
   if (!validation.success) {
     return { success: false, error: 'Invalid authorization code.' };
-  }
-
-  if (useTestMode) {
-      await setAuthCookie('mock_token', 3600);
-      return { success: true };
   }
 
   try {
@@ -104,10 +96,6 @@ async function getVehicle(vehicleId: string, accessToken: string) {
 }
 
 export async function getVehicles() {
-    if (useTestMode) {
-        return mockVehicles;
-    }
-
     const accessToken = await getAccessToken();
     if (!accessToken) {
         console.error("Unauthorized: No access token found");
@@ -145,10 +133,6 @@ export async function getVehicles() {
 }
 
 export async function getVehicleData(vehicleId: string) {
-    if (useTestMode) {
-        return mockVehicleData;
-    }
-    
     const accessToken = (await cookies()).get('tesla_access_token')?.value;
     if (!accessToken) {
         console.error("Unauthorized: No access token found");
@@ -186,15 +170,6 @@ export async function getVehicleData(vehicleId: string) {
 }
 
 export async function wakeUpVehicle(vehicleId: string) {
-    if (useTestMode) {
-        // In test mode, we can't truly change the state, but we can revalidate
-        // to simulate the refresh. The mock data will remain the same.
-        console.log(`Simulating wake up for vehicle ${vehicleId}`);
-        await delay(1500); // Simulate delay
-        revalidatePath('/dashboard');
-        return { success: true };
-    }
-
     const accessToken = await getAccessToken();
     if (!accessToken) {
         return { success: false, error: "Unauthorized" };
