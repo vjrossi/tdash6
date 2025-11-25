@@ -1,0 +1,29 @@
+User Endpoints
+These endpoints require a user context. In the case of a third-party business token, there is no user context and are not compatible with these requests.
+
+Endpoints
+
+
+feature_config
+
+
+GET /api/1/users/feature_config
+Returns any custom feature flag applied to a user.
+
+me
+
+
+GET /api/1/users/me
+Returns a summary of a user's account.
+
+orders
+
+
+GET /api/1/users/orders
+Returns the active orders for a user.
+
+region
+
+
+GET /api/1/users/region
+Returns a user's region and appropriate fleet-api base URL. Accepts no parameters, response is based on the authentication token subject.

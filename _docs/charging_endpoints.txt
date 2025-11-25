@@ -1,0 +1,21 @@
+Charging Endpoints
+Endpoints
+
+
+charging_history
+
+
+GET /api/1/dx/charging/history
+Returns the paginated charging history.
+
+charging_invoice
+
+
+GET /api/1/dx/charging/invoice/{id}
+Returns a charging invoice pdf for an event from charging history.
+
+charging_sessions (only for business fleet owners)
+
+
+GET /api/1/dx/charging/sessions
+Returns the charging session information including pricing and energy data. This endpoint is only available for business accounts that own a fleet of vehicles.

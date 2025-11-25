@@ -1,0 +1,18 @@
+Regions and Countries
+Base URLs by Region
+
+Fleet API is available regionally. Use the appropriate region for each user.
+
+North America, Asia-Pacific (excluding China): https://fleet-api.prd.na.vn.cloud.tesla.com
+Europe, Middle East, Africa: https://fleet-api.prd.eu.vn.cloud.tesla.com
+China: https://fleet-api.prd.cn.vn.cloud.tesla.cn
+Localized documentation at https://developer.tesla.cn/docs/fleet-api
+To make calls to vehicles in China, create an account on https://www.tesla.cn/ and create a separate application on https://developer.tesla.cn/. This requires a +86 phone number.
+Countries
+
+Payment and modifying billing limit is available in these countries:
+
+North America: US, CA, MX, PR
+Europe: GB, NO, NL, DE, IE, FR, DK, SE, BE, SK, GR, AT, BG, HR, CH, CY, CZ, EE, FI, HU, IT, LV, LT, LU, MT, PL, PT, RO, SI, ES
+Asia-Pacific: JP, KR, AU, TW, NZ, HK, MO, MY, TH, PH
+Countries will only be added where Tesla already sells vehicles.

@@ -1,0 +1,35 @@
+Authentication
+API endpoints require an authentication token. It must be included as a header:
+
+Authorization: Bearer <token>
+Token Types
+
+There are four types of tokens, each used with a different purpose. Identifying the proper token type is important. Otherwise, the API will return unexpected responses.
+
+Choose a token type based on use case.
+
+Developers building closed-source software on top of Fleet API that will access user's accounts: Third-party token.
+Businesses registered with Tesla for Business looking to interact with their Tesla products: Partner token.
+Businesses can self-onboard to Tesla for Business by visiting the self-onboarding page.
+Hobbyists looking to interact with their own Tesla products: Third-party token.
+Applications authenticating on behalf of a business: Third-party for Business token.
+All calls to Partner Endpoints: Partner token.
+Scopes
+
+Scopes are used to limit API access to only the data an application needs.
+
+Name	Scope	Description
+Sign in with Tesla	openid	Allow Tesla customers to sign in to the application with their Tesla credentials.
+Refresh Tokens	offline_access	Allow getting a refresh token without needing user to log in again.
+Profile Information	user_data	Contact information, home address, profile picture, and referral information.
+Vehicle Information	vehicle_device_data	Allow access to your vehicle’s live data, service history, service scheduling data, service communications, eligible upgrades, nearby Superchargers and ownership details.
+Vehicle Location	vehicle_location	Allow access to vehicle location information, including data such as precise location, and coarse location for approximate location services.
+Vehicle Commands	vehicle_cmds	Commands like add/remove driver, access Live Camera, unlock, wake up, remote start, and schedule software updates.
+Vehicle Charging Management	vehicle_charging_cmds	Vehicle charging history, billed amount, charging location, commands to schedule, and start/stop charging.
+Energy Product Information	energy_device_data	Energy live status, site info, backup history, energy history, and charge history.
+Energy Product Settings	energy_cmds	Update settings like backup reserve percent, operation mode, and storm mode.
+Useful Links
+
+The OAuth server's metadata file can be found at: https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/thirdparty/.well-known/openid-configuration.
+
+A Postman collection with these requests can be found here.

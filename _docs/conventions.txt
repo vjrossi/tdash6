@@ -1,0 +1,81 @@
+Conventions
+Request Format
+
+Requests require the HTTP header 'Content-Type' with the value 'application/json'. In addition, all authenticated endpoints require the standard Bearer Authorization header and a valid token.
+
+  Content-Type: application/json
+  Authorization: Bearer 8s2wfclhyp5iiikowm3ocnfalt7qfl7es8xhuda3ttusslssx6c14hq7yocp62c5
+POST request parameters are expected to be a JSON object in the body.
+
+Response Format
+
+Responses are returned as a JSON object with the following common fields:
+
+Field	Description
+response: json	JSON representing the response. May be a scalar, an array or a object depending on the specific request.
+error: short-string	Short error "enum" like "not_found", "invalid_resource", "invalid_password".
+error_description: long-string	Additional error information.
+messages: {"field1":["problem1","problem2"],...}	Data validation issues, especially on a 422 responses.
+Request Parameters
+
+The {vehicle_tag} path parameter for device/entity/vehicle endpoints is expected to be the integer id of the record returned from the list endpoint. Example: vehicles list. For vehicle endpoints and vehicle commands, a valid VIN can be used instead of an integer id.
+
+Response Codes
+
+Not all possible response codes are covered in Endpoint examples. The following are common meanings of status codes. The response body is typically JSON-encoded with details in the "error" field.
+
+Successes
+
+Status Code	Description	Detail
+200	Ok	The request was handled successfully.
+201	Created	The record was created successfully.
+Client Errors
+
+Status Code	Description	Detail
+400	Bad Request	
+• invalid_command - The data request or command is unknown.
+• invalid_field - A field in the input is not valid.
+• invalid_request - The request body is not valid, a description giving a more specific error message may be returned.
+• invalid_auth_code - The "code" in request body is invalid, generate a new one and try again.
+• invalid_redirect_url - Invalid redirect URI/URL. The authorize redirect URI and token redirect URI must match.
+• unsupported_grant_type - The grant type is invalid. Use one of: client_credentials, refresh_token, authorization_code.
+• unauthorized_client - We don't recognize this client_id and client_secret combination. Use the client_id and client_secret that has been granted for the application.
+401	Unauthorized	
+• mobile_access_disabled - The vehicle has turned off remote access.
+• no response body - The OAuth token has expired.
+• login_required - The user has reset their password and a new auth code is required, the refresh_token has already been used, or the user has revoked application access.
+402	Payment Required	Payment is required in order to use the API (non-free account only)
+403	Forbidden	
+• Access to this resource is not authorized, developers should check required scopes.
+• Tesla Vehicle Command Protocol required in order to interact with the devices.
+404	Not Found	The requested resource does not exist.
+405	Not Allowed	The operation is not allowed.
+406	Not Acceptable	The HTTP request does not have a Content-Type header set to application/json.
+408	Device Not Available	If the vehicle is not "online" when a request is made.
+412	Precondition Failed	A condition has not been met to process the request.
+• Unregistered account - first call the partner account register endpoint.
+418	Client Too Old (Not supported)	Mobile application needs to be updated (Tesla App only).
+421	Incorrect region	This user is not present in the current region. See the regional requirements section for more information.
+422	Invalid Resource	There is a semantic problem with the data, e.g. missing or invalid data.
+• Vehicle does not yet support the Tesla Vehicle Command Protocol.
+423	Locked	Account is locked, and must be unlocked by Tesla. No response body.
+429	Rate limited	Account or server is rate limited. This happens when too many requests are made by an account.
+• Check the 'RateLimit-Reset' or 'Retry-After' request headers to determine when to make the next request.
+451	Resource Unavailable For Legal Reasons	Querying for a user/vehicle without proper privacy settings (e.g. wrong region).
+499	Client Closed Request	Client has closed the request before the server could send a response.
+Server Errors
+
+Status Code	Description	Detail
+500	Internal server error	An error occurred while processing the request.
+503	Service Unavailable	Either an internal service or a vehicle did not respond (timeout).
+504	Gateway Timeout	Server did not receive a response.
+Device Errors
+
+Status Code	Description	Detail
+540	Device Unexpected response	Vehicle responded with an error - might need a reboot, OTA update, or service.
+API Status
+
+GET /status
+
+curl 'https://fleet-api.prd.na.vn.cloud.tesla.com/status'
+This endpoint returns the string "ok" if the API is operating normally. No HTTP headers are required.

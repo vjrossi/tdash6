@@ -1,0 +1,109 @@
+
+Developer
+Skip to main content
+Documentation
+Charging
+
+Energy Endpoints
+Endpoints
+
+
+backup
+
+
+POST /api/1/energy_sites/{energy_site_id}/backup
+Adjust the site's backup reserve.
+
+Visit https://www.tesla.com/support/energy/powerwall/mobile-app/powerwall-modes#backup-reserve-anchor for more info.
+backup_history
+
+
+GET /api/1/energy_sites/{energy_site_id}/calendar_history?kind=backup&start_date={start_date}&end_date={end_date}&period={period}&time_zone={time_zone}
+Returns the backup (off-grid) event history of the site in duration of seconds.
+
+charge_history
+
+
+GET /api/1/energy_sites/{energy_site_id}/telemetry_history?kind=charge&start_date={start_date}&end_date={end_date}&time_zone={time_zone}
+Returns the charging history of a wall connector.
+
+Energy values are in watt hours.
+energy_history
+
+
+GET /api/1/energy_sites/{energy_site_id}/calendar_history?kind=energy&start_date={start_date}&end_date={end_date}&period={period}&time_zone={time_zone}
+Returns the energy measurements of the site, aggregated to the requested period.
+
+Energy values are in watt hours.
+Visit https://www.tesla.com/support/energy/powerwall/mobile-app/energy-data for more info.
+grid_import_export
+
+
+POST /api/1/energy_sites/{energy_site_id}/grid_import_export
+Allow/disallow charging from the grid and exporting energy to the grid.
+
+Visit https://www.tesla.com/support/energy/powerwall/mobile-app/powerwall-modes#energy-exports-anchor for more info.
+live_status
+
+
+GET /api/1/energy_sites/{energy_site_id}/live_status
+Returns the live status of the site (power, state of energy, grid status, storm mode).
+
+Power values are in watts.
+Energy values are in watt hours.
+off_grid_vehicle_charging_reserve
+
+
+POST /api/1/energy_sites/{energy_site_id}/off_grid_vehicle_charging_reserve
+Adjust the site's off-grid vehicle charging backup reserve.
+
+Visit https://www.tesla.com/support/energy/powerwall/mobile-app/vehicle-charging-during-power-outage for more info.
+operation
+
+
+POST /api/1/energy_sites/{energy_site_id}/operation
+Set the site's mode.
+
+Use autonomous for time-based control and self_consumption for self-powered mode.
+Visit https://www.tesla.com/support/energy/powerwall/mobile-app/powerwall-modes for more info.
+products
+
+
+GET /api/1/products
+Returns products mapped to user.
+
+site_info
+
+
+GET /api/1/energy_sites/{energy_site_id}/site_info
+Returns information about the site. Things like assets (has solar, etc), settings (backup reserve, etc), and features (storm_mode_capable, etc).
+
+Power values are in watts.
+Energy values are in watt hours.
+default_real_mode can be autonomous for time-based control and self_consumption for self-powered mode.
+storm_mode
+
+
+POST /api/1/energy_sites/{energy_site_id}/storm_mode
+Update storm watch participation.
+
+Visit https://www.tesla.com/support/energy/powerwall/mobile-app/storm-watch for more info.
+time_of_use_settings
+
+
+POST /api/1/energy_sites/{energy_site_id}/time_of_use_settings
+Update the time of use settings for the energy site. Visit https://www.tesla.com/support/energy/powerwall/mobile-app/utility-rate-plans for more information about Utility Rate Plans. The payload for this request that should be passed in for tou_settings.tariff_content_v2 is a tariff structure. Visit https://digitalassets-energy.tesla.com/raw/upload/app/fleet-api/example-tariff/PGE-EV2-A.json for an example. Please note the following when creating the payload:
+
+At least one season must be present. Seasons can have arbitrary names as they are just a way to distinguish rates for specific times of the year. Each season contains a tariff period specifying the start and end months/days along with its time of use periods.
+demand_charges is for tariffs that charge a fee for peak power consumption. This is not common for residential systems. Typically residential customers are only charged for the energy that they consume, energy_charges should be used in this case.
+Prices in ALL in energy_charges or demand_charges apply to all time periods. It is recommended to use the ALL field for flat/fixed tariffs instead of creating tariff periods.
+The following are valid currency strings: USD, EUR, GBP
+Time of use labels may be any string but the mobile app will only support displaying the following labels: ON_PEAK, OFF_PEAK, PARTIAL_PEAK or SUPER_OFF_PEAK.
+The tariff must pass the following validation checks:
+No overlaps of time periods
+No gaps in time periods
+No overlapping seasons or gaps between seasons
+All periods/seasons that have prices defined have time periods defined
+All periods/seasons that have time periods defined have prices
+No negative prices. Negative prices will be rounded to zero. Therefore use prices that include taxes. This will limit the frequency of negative prices occurring.
+Buy price should be >= sell price at any given time. If not, the buy price will be set equal to the sell price.

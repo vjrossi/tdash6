@@ -1,0 +1,453 @@
+Vehicle Commands
+Vehicle commands allow direct interaction with a vehicle. To accept commands, a vehicle must have an application's virtual key installed. Full details about virtual keys are available in the virtual keys developer guide. The Vehicle Command Proxy exposes a REST API for sending commands.
+
+The Vehicle Command Proxy exposes endpoints identical to the ones described below. When it receives a request, it signs the command with a virtual key before passing the request to Fleet API. If a command is not signed, the vehicle will reject the request and perform no action. This ensures unauthorized parties are not able to send commands.
+
+Note: The Vehicle Commands Proxy is not required for most business vehicles and Pre-2021 S and X vehicles.
+
+Endpoints
+
+
+actuate_trunk
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/actuate_trunk
+Controls the front (which_trunk: "front") or rear (which_trunk: "rear") trunk.
+
+add_charge_schedule
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/add_charge_schedule
+Add a schedule for vehicle charging. To view existing schedules, call the vehicle_data endpoint and request charge_schedule_data.
+
+Related: remove charge schedule
+
+add_precondition_schedule
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/add_precondition_schedule
+Add or modify a preconditioning schedule. To view existing schedules, call the vehicle_data endpoint and request preconditioning_schedule_data.
+
+Related: remove precondition schedule
+
+adjust_volume
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/adjust_volume
+Adjusts vehicle media playback volume. This command requires the user to be present and mobile access to be enabled.
+
+auto_conditioning_start
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/auto_conditioning_start
+Starts climate preconditioning.
+
+auto_conditioning_stop
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/auto_conditioning_stop
+Stops climate preconditioning.
+
+cancel_software_update
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/cancel_software_update
+Cancels the countdown to install the vehicle software update. This operation will no longer work after the vehicle begins the software installation.
+
+charge_max_range
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/charge_max_range
+Charges in max range mode -- we recommend limiting the use of this mode to long trips.
+
+charge_port_door_close
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/charge_port_door_close
+Closes the charge port door. This command will return errors depending on the vehicle state.
+
+cable connected - a charge cable is plugged into the vehicle.
+non-motorized charge port - the vehicle is not equipped with a motorized charge port. This applies to older Model S and Model X vehicles.
+already closed - the charge port door is already closed.
+charge_port_door_open
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/charge_port_door_open
+Opens the charge port door. This command will return errors depending on the vehicle state.
+
+car_wash - the vehicle is in car wash mode.
+not allowed - the vehicle's drive rail in engaged or the vehicle is not in park.
+charge_standard
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/charge_standard
+Charges in Standard mode. This command may return already_started if the existing charge limit request is already less than or equal to the standard/default charge limit.
+
+charge_start
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/charge_start
+Starts charging the vehicle. This command may return errors if the vehicle is unable to begin charging.
+
+complete - the vehicle has already completed charging.
+is_charging - the vehicle is already charging.
+disconnected - the vehicle is not connected to a charger.
+no_power - the connected charger is unable to provide power.
+requested - the vehicle has already received a start charge request.
+charge_stop
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/charge_stop
+Stops charging the vehicle. This command will return not_charging if the vehicle is not currently charging.
+
+clear_pin_to_drive_admin
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/clear_pin_to_drive_admin
+Deactivates PIN to Drive and resets the associated PIN for vehicles running firmware versions 2023.44+. This command is only accessible to fleet managers or owners.
+
+door_lock
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/door_lock
+Locks the vehicle.
+
+door_unlock
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/door_unlock
+Unlocks the vehicle.
+
+erase_user_data
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/erase_user_data
+Erases user's data from the user interface. Requires the vehicle to be parked and in Guest Mode.
+
+flash_lights
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/flash_lights
+Briefly flashes the vehicle headlights. Requires the vehicle to be in park.
+
+guest_mode
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/guest_mode
+Restricts certain vehicle UI functionality from guest users:
+PIN to Drive
+Speed Limit Mode
+Glovebox PIN
+Add/Remove keys
+Change vehicle name
+Allows erase_user_data on the vehicle.
+Allows a user to set up Tesla mobile app access with the vehicle key card:
+If a user unlocks a vehicle or authenticates it for drive with a key card, they will receive a prompt to set up their phone as key by scanning a QR code on the vehicle touchscreen.
+The QR code is single-use and expires after 10 minutes.
+Requires vehicle firmware version 2024.14+.
+Any account that scans the QR code will gain Tesla app access to the vehicle, and download that account's Tesla profile to the vehicle.
+Tesla app access allows a user to view live vehicle location, issue remote commands, and set up their phone as key within Bluetooth proximity of the vehicle.
+Guest access will not have certain driver access features such as Service and Roadside.
+Guest access is automatically removed when:
+A key card is used to drive the vehicle.
+A new QR code is scanned (only one guest is allowed at a time).
+Guest Mode is disabled.
+In addition, one can use the drivers remove endpoint to remotely revoke guest access.
+If a user does not have the app installed, they will see this webpage (https://www.tesla.com/_gs/test) to guide them through the process.
+honk_horn
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/honk_horn
+Honks the vehicle horn. Requires the vehicle to be in park.
+
+media_next_fav
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/media_next_fav
+Advances media player to next favorite track.
+
+media_next_track
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/media_next_track
+Advances media player to next track.
+
+media_prev_fav
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/media_prev_fav
+Advances media player to previous favorite track.
+
+media_prev_track
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/media_prev_track
+Advances media player to previous track.
+
+media_toggle_playback
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/media_toggle_playback
+Toggles current play/pause state.
+
+media_volume_down
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/media_volume_down
+Turns the volume down by one.
+
+navigation_gps_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/navigation_gps_request
+Start navigation to given coordinates. Order can be used to specify order of multiple stops.
+
+navigation_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/navigation_request
+Sends a location to the in-vehicle navigation system.
+
+navigation_sc_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/navigation_sc_request
+Start navigation to a supercharger.
+
+navigation_waypoints_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/navigation_waypoints_request
+Sends a list of waypoints to the vehicle's navigation system.
+
+remote_auto_seat_climate_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_auto_seat_climate_request
+Sets automatic seat heating and cooling. Requires preconditioning or climate keeper to be on.
+
+remote_auto_steering_wheel_heat_climate_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_auto_steering_wheel_heat_climate_request
+Sets automatic steering wheel heating on/off. Requires preconditioning or climate keeper to be on.
+
+remote_boombox
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_boombox
+Plays a sound through the vehicle external speaker.
+
+Sound IDs:
+
+0: random fart
+
+2000: locate ping
+
+remote_seat_cooler_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_seat_cooler_request
+Sets seat cooling. Requires preconditioning or climate keeper to be on.
+
+remote_seat_heater_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_seat_heater_request
+Sets seat heating. Requires preconditioning or climate keeper to be on.
+
+remote_start_drive
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_start_drive
+Starts the vehicle remotely. Requires keyless driving to be enabled.
+
+remote_steering_wheel_heat_level_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_steering_wheel_heat_level_request
+Sets steering wheel heat level. Requires preconditioning or climate keeper to be on.
+
+remote_steering_wheel_heater_request
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remote_steering_wheel_heater_request
+Sets steering wheel heating on/off. For vehicles that do not support auto steering wheel heat. Requires preconditioning or climate keeper to be on.
+
+remove_charge_schedule
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remove_charge_schedule
+Remove a charge schedule by ID. To view existing schedules, call the vehicle_data endpoint and request charge_schedule_data.
+
+Related: add charge schedule
+
+remove_precondition_schedule
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/remove_precondition_schedule
+Remove a precondition schedule by ID. To view existing schedules, call the vehicle_data endpoint and request preconditioning_schedule_data.
+
+Related: add precondition schedule
+
+reset_pin_to_drive_pin
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/reset_pin_to_drive_pin
+Removes PIN to Drive. Requires the car to be in Pin to Drive mode and not in Valet mode. Note that this only works if PIN to Drive is not active. This command is only accessible to fleet managers or owners. This command also requires the Tesla Vehicle Command Protocol - for more information, refer to the documentation here.
+
+reset_valet_pin
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/reset_valet_pin
+Removes PIN for Valet Mode. To use this command, valet mode must be disabled. See set_valet_mode.
+
+schedule_software_update
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/schedule_software_update
+Schedules a vehicle software update (over the air "OTA") to be installed in the future.
+
+set_bioweapon_mode
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_bioweapon_mode
+Turns Bioweapon Defense Mode on and off.
+
+set_cabin_overheat_protection
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_cabin_overheat_protection
+Sets the vehicle overheat protection.
+
+set_charge_limit
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_charge_limit
+Sets the vehicle charge limit. This command will return already_set if the requested percent is the same as the existing charge limit.
+
+set_charging_amps
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_charging_amps
+Sets the vehicle charging amps.
+
+set_climate_keeper_mode
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_climate_keeper_mode
+Enables climate keeper mode. Accepted values are: 0,1,2,3. Mapping to respectively Off, Keep Mode, Dog Mode, Camp Mode.
+
+set_cop_temp
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_cop_temp
+Adjusts the Cabin Overheat Protection temperature (COP). This command will not activate COP. The precise target temperature depends on if the user has selected C or F. Accepted values are: 0,1,2. Mapping to respectively Low (90F/30C), Medium (95F/35C), High (100F/40C).
+
+set_pin_to_drive
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_pin_to_drive
+Sets a four-digit passcode for PIN to Drive. This PIN must then be entered before the vehicle can be driven. Once a PIN is set, the vehicle remembers its value even when PIN to Drive is disabled and it will discard any new PIN provided using this method. To change an existing PIN, first call reset_pin_to_drive_pin. This command is only accessible to fleet managers or owners. This command also requires the Tesla Vehicle Command Protocol - for more information, refer to the documentation here.
+
+set_preconditioning_max
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_preconditioning_max
+Sets an override for preconditioning — it should default to empty if no override is used.
+
+set_scheduled_charging
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_scheduled_charging
+This endpoint is not recommended beginning with firmware version 2024.26. The add charge schedule command should be used instead.
+
+Sets a time at which charging should be completed. The time parameter is minutes after midnight (e.g: time=120 schedules charging for 2:00am vehicle local time).
+
+set_scheduled_departure
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_scheduled_departure
+This endpoint is not recommended beginning with firmware version 2024.26. The add precondition schedule command should be used instead.
+
+Sets a time at which departure should be completed. The departure_time and end_off_peak_time parameters are minutes after midnight (e.g: departure_time=120 schedules departure for 2:00am vehicle local time).
+
+set_sentry_mode
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_sentry_mode
+Enables and disables Sentry Mode. Sentry Mode allows customers to watch the vehicle cameras live from the mobile app, as well as record sentry events.
+
+set_temps
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_temps
+Sets the driver and/or passenger-side cabin temperature (and other zones if sync is enabled).
+
+set_valet_mode
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_valet_mode
+Turns on Valet Mode and sets a four-digit passcode that must then be entered to disable Valet Mode.
+
+set_vehicle_name
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/set_vehicle_name
+Changes the name of a vehicle. Not supported in guest mode. This command also requires the Tesla Vehicle Command Protocol - for more information, refer to the documentation here.
+
+speed_limit_activate
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/speed_limit_activate
+Activates Speed Limit Mode with a four-digit PIN.
+
+speed_limit_clear_pin
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/speed_limit_clear_pin
+Deactivates Speed Limit Mode and resets the associated PIN.
+
+speed_limit_clear_pin_admin
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/speed_limit_clear_pin_admin
+Deactivates Speed Limit Mode and resets the associated PIN for vehicles running firmware versions 2023.38+. This command is only accessible to fleet managers or owners.
+
+speed_limit_deactivate
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/speed_limit_deactivate
+Deactivates Speed Limit Mode.
+
+speed_limit_set_limit
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/speed_limit_set_limit
+Sets the maximum speed (in miles per hours) for Speed Limit Mode.
+
+sun_roof_control
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/sun_roof_control
+Control the sunroof on sunroof-enabled vehicles.
+
+Supported states: stop, close, and vent.
+
+trigger_homelink
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/trigger_homelink
+Turns on HomeLink (used to open and close garage doors). This command will error with not_supported if the vehicle is not equipped for HomeLink.
+
+upcoming_calendar_entries
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/upcoming_calendar_entries
+Upcoming calendar entries stored on the vehicle.
+
+window_control
+
+
+POST /api/1/vehicles/{vehicle_tag}/command/window_control
+Control the windows of a parked vehicle. Supported commands: vent and close. When closing, specify lat and lon of user to ensure they are within range of vehicle (unless this is an M3 platform vehicle).
