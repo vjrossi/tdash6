@@ -193,6 +193,10 @@ export interface VehicleState {
     valet_mode: boolean;
     valet_pin_needed: boolean;
     vehicle_name: string;
+    tpms_pressure_fl: number;
+    tpms_pressure_fr: number;
+    tpms_pressure_rl: number;
+    tpms_pressure_rr: number;
 }
 
 export interface SoftwareUpdate {

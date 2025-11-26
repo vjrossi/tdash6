@@ -75,26 +75,6 @@ export async function logout() {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function getVehicle(vehicleId: string, accessToken: string) {
-    const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
-    if (!baseUrl) {
-        throw new Error("API base URL is not configured.");
-    }
-    const response = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}`,
-    {
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-        },
-        cache: 'no-store',
-    });
-    if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.error || `Failed to fetch vehicle status. Status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.response;
-}
-
 export async function getVehicles() {
     const accessToken = await getAccessToken();
     if (!accessToken) {
@@ -133,7 +113,7 @@ export async function getVehicles() {
 }
 
 export async function getVehicleData(vehicleId: string) {
-    const accessToken = (await cookies()).get('tesla_access_token')?.value;
+    const accessToken = await getAccessToken();
     if (!accessToken) {
         return { success: false, error: "Unauthorized" };
     }
@@ -144,17 +124,37 @@ export async function getVehicleData(vehicleId: string) {
     }
 
     try {
-        const wakeUpResult = await wakeUpVehicle(vehicleId);
-        if (!wakeUpResult.success) {
-            return { success: false, error: "Vehicle is offline and could not be woken up." };
+        // First, get the vehicle's basic information to check its state
+        const initialResponse = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}`,
+        {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            cache: 'no-store',
+        });
+
+        if (!initialResponse.ok) {
+            const errorBody = await initialResponse.json().catch(() => ({}));
+            return { success: false, error: errorBody.error || `Failed to fetch vehicle status. Status: ${initialResponse.status}` };
         }
 
-        const response = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}/vehicle_data?endpoints=vehicle_data_combo`, {
+        let vehicle = (await initialResponse.json()).response;
+
+        // If the vehicle is asleep, wake it up
+        if (vehicle.state !== 'online') {
+            const wakeUpResult = await wakeUpVehicle(vehicleId, accessToken);
+            if (!wakeUpResult.success) {
+                return { success: false, error: "Vehicle is offline and could not be woken up." };
+            }
+        }
+
+        // Now that the vehicle is awake, fetch the full data combo
+        const response = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}/vehicle_data`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
             },
-            cache: 'no-store', // Ensure fresh data
+            cache: 'no-store', 
         });
 
         if (!response.ok) {
@@ -172,12 +172,7 @@ export async function getVehicleData(vehicleId: string) {
     }
 }
 
-export async function wakeUpVehicle(vehicleId: string) {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-        return { success: false, error: "Unauthorized" };
-    }
-
+async function wakeUpVehicle(vehicleId: string, accessToken: string) {
     const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
     if (!baseUrl) {
         return { success: false, error: "API base URL is not configured." };
@@ -192,13 +187,19 @@ export async function wakeUpVehicle(vehicleId: string) {
 
         const startTime = Date.now();
         const timeout = 30000; // 30 seconds
-        let vehicle = null;
+        let vehicleState = null;
 
         while (Date.now() - startTime < timeout) {
-            vehicle = await getVehicle(vehicleId, accessToken);
-            if (vehicle.state === 'online') {
+            const res = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                },
+            });
+            const vehicle = (await res.json()).response;
+            vehicleState = vehicle.state;
+            if (vehicleState === 'online') {
                 revalidatePath('/dashboard');
-                return { success: true, data: vehicle };
+                return { success: true };
             }
             await delay(2000); // Wait 2 seconds before checking again
         }
@@ -212,3 +213,4 @@ export async function wakeUpVehicle(vehicleId: string) {
         return { success: false, error: `Failed to wake up vehicle. Reason: ${errorMessage}` };
     }
 }
+

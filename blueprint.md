@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application integrates with the Tesla Fleet API to allow users to authenticate and view basic information about their vehicles.
+This application integrates with the Tesla Fleet API to allow users to authenticate and view information about their vehicles.
 
 ## Features & Design
 
@@ -11,6 +11,8 @@ This application integrates with the Tesla Fleet API to allow users to authentic
     *   Vehicle Name
     *   VIN (Vehicle Identification Number)
     *   State (e.g., "online", "asleep")
+    *   Tire Pressure (for each tire)
+*   **Data Refresh:** A "Refresh" button on each vehicle card allows the user to manually trigger a data refresh.
 *   **Styling:** Uses Tailwind CSS for a clean, modern design.
 *   **Logout:** A logout button is provided for users to securely end their session.
 
@@ -23,4 +25,7 @@ This application integrates with the Tesla Fleet API to allow users to authentic
 *   **Status:** Completed
 
 *   **Objective:** Simplify the application to only display vehicle name, VIN, and state.
+*   **Status:** Completed
+
+*   **Objective:** Display tire pressure for each vehicle.
 *   **Status:** Completed
