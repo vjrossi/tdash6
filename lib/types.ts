@@ -13,6 +13,10 @@ export interface VehicleData {
     vehicle_state: {
         odometer: number;
         sentry_mode: boolean;
+        tpms_pressure_fl?: number;
+        tpms_pressure_fr?: number;
+        tpms_pressure_rl?: number;
+        tpms_pressure_rr?: number;
     };
     drive_state?: {
         shift_state: string | null;

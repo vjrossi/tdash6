@@ -22,5 +22,5 @@ This application integrates with the Tesla Fleet API to allow users to authentic
         *   **Charge State:** Battery level (with a visual progress bar), charging status, and range.
         *   **Climate Control:** Interior and exterior temperatures, and climate status.
         *   **Vehicle Status:** Odometer, current location, and sentry mode status.
-    4.  Refine the overall dashboard layout for a clean and polished look.
-
+        *   **Tyre Pressure:** A new, beautifully designed section to display the pressure of each tyre in PSI.
+    4.  Convert all distance units from miles to kilometres (e.g., odometer and range).
