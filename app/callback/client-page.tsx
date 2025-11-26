@@ -9,9 +9,14 @@ export default function CallbackClientPage() {
   const router = useRouter();
   const code = searchParams.get('code');
 
-  const [error, setError] = useState<string | null>(null);
+  // State for the asynchronous error from the token exchange
+  const [asyncError, setAsyncError] = useState<string | null>(null);
+
+  // Derived state for the synchronous error
+  const syncError = !code ? "Did not receive an authorization code from Tesla." : null;
 
   useEffect(() => {
+    // Only run the effect if there is a code to exchange
     if (code) {
       const performExchange = async () => {
         const result = await exchangeCodeForToken(code);
@@ -19,19 +24,15 @@ export default function CallbackClientPage() {
           // On success, redirect to the dashboard.
           router.push('/dashboard');
         } else {
-          // On failure, display the error.
-          setError(result.error || 'An unknown error occurred during token exchange.');
+          // On failure, set the asynchronous error state.
+          setAsyncError(result.error || 'An unknown error occurred during token exchange.');
         }
       };
       performExchange();
-    } 
+    }
   }, [code, router]);
 
-  useEffect(() => {
-    if (!code) {
-        setError("Did not receive an authorization code from Tesla.");
-    }
-  }, [code]);
+  const error = syncError || asyncError;
 
   return (
     <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">

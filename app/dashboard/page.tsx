@@ -1,11 +1,34 @@
-import { getVehicles } from '@/app/actions';
+import { getVehicles, getVehicleData, logout } from '@/app/actions';
 import { VehicleCard } from '@/app/components/VehicleCard';
-import { ErrorDisplay } from '@/app/components/ErrorDisplay';
-import { LogoutButton } from '@/app/components/LogoutButton';
 import { Vehicle } from '@/lib/types';
+import { LogOut } from 'lucide-react';
+
+function LogoutButton() {
+    return (
+        <form action={logout}>
+            <button className="flex items-center bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded transition-colors duration-300 ease-in-out">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+            </button>
+        </form>
+    );
+}
 
 export default async function DashboardPage() {
     const vehicles: Vehicle[] | null = await getVehicles();
+
+    // If we have vehicles, fetch the detailed data for each one in parallel
+    const vehicleDataPromises = vehicles ? vehicles.map(v => getVehicleData(v.id_s)) : [];
+    const vehicleDataResults = await Promise.all(vehicleDataPromises);
+
+    const vehiclesWithData = vehicles ? vehicles.map((vehicle, index) => {
+        const dataResult = vehicleDataResults[index];
+        return {
+            ...vehicle,
+            vehicle_data: dataResult.success ? dataResult.data : null,
+            error: !dataResult.success ? dataResult.error : null,
+        };
+    }) : [];
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 lg:p-8">
@@ -15,27 +38,15 @@ export default async function DashboardPage() {
             </header>
 
             <main className="w-full max-w-7xl mx-auto">
-                <h2 className="text-2xl font-semibold mb-6 text-white">My Vehicles</h2>
-                
-                {!vehicles && (
-                    <ErrorDisplay 
-                        title="Could Not Load Vehicles"
-                        message="There was an issue fetching vehicle data. This could be a network issue or a problem with the Tesla API."
-                        recommendation="If you are in development mode, make sure test mode is enabled. Otherwise, please try again later."
-                    />
-                )}
-
-                {vehicles && vehicles.length === 0 && (
-                    <div className="text-center py-12">
-                        <p className="text-gray-400">No vehicles were found for your account.</p>
-                    </div>
-                )}
-
-                {vehicles && vehicles.length > 0 && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                        {vehicles.map((vehicle: Vehicle) => (
+                {vehiclesWithData.length > 0 ? (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        {vehiclesWithData.map((vehicle) => (
                             <VehicleCard key={vehicle.id_s} vehicle={vehicle} />
                         ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-gray-400">No vehicles were found for your account, or there was an error fetching data.</p>
                     </div>
                 )}
             </main>

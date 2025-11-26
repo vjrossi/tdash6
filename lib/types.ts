@@ -1,3 +1,25 @@
+export interface VehicleData {
+    charge_state: {
+        battery_level: number;
+        charging_state: string;
+        battery_range: number;
+    };
+    climate_state: {
+        inside_temp: number;
+        outside_temp: number;
+        fan_status: number;
+        is_climate_on: boolean;
+    };
+    vehicle_state: {
+        odometer: number;
+        sentry_mode: boolean;
+    };
+    drive_state: {
+        shift_state: string | null;
+        latitude: number;
+    };
+}
+
 export interface Vehicle {
     id: number;
     vehicle_id: number;
@@ -13,204 +35,6 @@ export interface Vehicle {
     api_version: number;
     backseat_token: string | null;
     backseat_token_updated_at: number | null;
-    charge_state: ChargeState;
-    climate_state: ClimateState;
-    drive_state: DriveState;
-    gui_settings: GuiSettings;
-    vehicle_config: VehicleConfig;
-    vehicle_state: VehicleState;
-}
-
-export interface ChargeState {
-    battery_heater_on: boolean;
-    battery_level: number;
-    battery_range: number;
-    charge_amps: number;
-    charge_current_request: number;
-    charge_current_request_max: number;
-    charge_enable_request: boolean;
-    charge_energy_added: number;
-    charge_limit_soc: number;
-    charge_limit_soc_max: number;
-    charge_limit_soc_min: number;
-    charge_limit_soc_std: number;
-    charge_miles_added_ideal: number;
-    charge_miles_added_rated: number;
-    charge_port_cold_weather_mode: boolean | null;
-    charge_port_door_open: boolean;
-    charge_port_latch: string;
-    charge_rate: number;
-    charge_to_max_range: boolean;
-    charger_actual_current: number;
-    charger_pilot_current: number;
-    charger_power: number;
-    charger_voltage: number;
-    charging_state: string;
-    conn_charge_cable: string;
-    est_battery_range: number;
-    fast_charger_brand: string;
-    fast_charger_present: boolean;
-    fast_charger_type: string;
-    ideal_battery_range: number;
-    managed_charging_active: boolean;
-    managed_charging_start_time: number | null;
-    managed_charging_user_canceled: boolean;
-    max_range_charge_counter: number;
-    minutes_to_full_charge: number;
-    not_enough_power_to_heat: boolean | null;
-    scheduled_charging_pending: boolean;
-    scheduled_charging_start_time: number | null;
-    time_to_full_charge: number;
-    timestamp: number;
-    trip_charging: boolean;
-    usable_battery_level: number;
-    user_charge_enable_request: boolean | null;
-}
-
-export interface ClimateState {
-    battery_heater: boolean;
-    battery_heater_no_power: boolean | null;
-    climate_keeper_mode: string;
-    defrost_mode: number;
-    driver_temp_setting: number;
-    fan_status: number;
-    inside_temp: number;
-    is_auto_conditioning_on: boolean;
-    is_climate_on: boolean;
-    is_front_defroster_on: boolean;
-    is_preconditioning: boolean;
-    is_rear_defroster_on: boolean;
-    left_temp_direction: number;
-    max_avail_temp: number;
-    min_avail_temp: number;
-    outside_temp: number;
-    passenger_temp_setting: number;
-    remote_heater_control_enabled: boolean;
-    right_temp_direction: number;
-    seat_heater_left: number;
-    seat_heater_right: number;
-    side_mirror_heaters: boolean;
-    timestamp: number;
-    wiper_blade_heater: boolean;
-}
-
-export interface DriveState {
-    gps_as_of: number;
-    heading: number;
-    latitude: number;
-    longitude: number;
-    native_latitude: number;
-    native_location_supported: number;
-    native_longitude: number;
-    native_type: string;
-    power: number;
-    shift_state: string | null;
-    speed: number | null;
-    timestamp: number;
-}
-
-export interface GuiSettings {
-    gui_24_hour_time: boolean;
-    gui_charge_rate_units: string;
-    gui_distance_units: string;
-    gui_range_display: string;
-    gui_temperature_units: string;
-    show_range_units: boolean;
-    timestamp: number;
-}
-
-export interface VehicleConfig {
-    can_accept_navigation_requests: boolean;
-    can_actuate_trunks: boolean;
-    car_special_type: string;
-    car_type: string;
-    charge_port_type: string;
-    default_rear_seat_state: string;
-    ece_restrictions: boolean;
-    eu_vehicle: boolean;
-    exterior_color: string;
-    front_drive_unit: string;
-    has_air_suspension: boolean;
-    has_ludicrous_mode: boolean;
-    has_motorized_charge_port: boolean;
-    key_version: number;
-    motorized_charge_port: boolean;
-    plg: boolean;
-    rear_drive_unit: string;
-    rear_seat_heaters: number;
-    rear_seat_type: string | null;
-    rhd: boolean;
-    roof_color: string;
-    seat_type: string | null;
-    spoiler_type: string;
-    sun_roof_installed: boolean | null;
-    third_row_seats: string;
-    timestamp: number;
-    trim_badging: string;
-    use_range_badging: boolean;
-    wheel_type: string;
-}
-
-export interface VehicleState {
-    api_version: number;
-    autopark_state_v2: string;
-    autopark_style: string;
-    calendar_supported: boolean;
-    car_version: string;
-    center_display_state: number;
-    df: number;
-    dr: number;
-    fd_window: number;
-    feature_bitmask: string;
-    fp_window: number;
-    ft: number;
-    homelink_device_count: number;
-    homelink_nearby: boolean;
-    is_user_present: boolean;
-    last_autopark_error: string;
-    locked: boolean;
-    media_state: { remote_control_enabled: boolean };
-    notifications_supported: boolean;
-    odometer: number;
-    parsed_calendar_supported: boolean;
-    pf: number;
-    pr: number;
-    rd_window: number;
-    remote_start: boolean;
-    remote_start_enabled: boolean;
-    remote_start_supported: boolean;
-    rp_window: number;
-    rt: number;
-    sentry_mode: boolean;
-    sentry_mode_available: boolean;
-    smart_summon_available: boolean;
-    software_update: SoftwareUpdate;
-    speed_limit_mode: SpeedLimitMode;
-    summon_standby_mode_enabled: boolean;
-    sun_roof_percent_open: number | null;
-    sun_roof_state: string;
-    timestamp: number;
-    valet_mode: boolean;
-    valet_pin_needed: boolean;
-    vehicle_name: string;
-    tpms_pressure_fl: number;
-    tpms_pressure_fr: number;
-    tpms_pressure_rl: number;
-    tpms_pressure_rr: number;
-}
-
-export interface SoftwareUpdate {
-    download_perc: number;
-    expected_duration_sec: number;
-    install_perc: number;
-    status: string;
-    version: string;
-}
-
-export interface SpeedLimitMode {
-    active: boolean;
-    current_limit_mph: number;
-    max_limit_mph: number;
-    min_limit_mph: number;
-    pin_code_set: boolean;
+    vehicle_data?: VehicleData;
+    error?: string | null;
 }
