@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Vehicle } from '@/lib/types';
 import { getVehicleData } from '@/app/actions';
+import { RefreshCw, Power, Gauge } from 'lucide-react';
 
 interface VehicleCardProps {
     vehicle: Vehicle;
@@ -43,21 +44,28 @@ export function VehicleCard({ vehicle: initialVehicle }: VehicleCardProps) {
                 <button 
                     onClick={fetch_vehicle_data}
                     disabled={loading}
-                    className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded disabled:bg-gray-600"
+                    className="flex items-center bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded disabled:bg-gray-600 transition-colors duration-300 ease-in-out"
                 >
+                    <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                     {loading ? 'Refreshing...' : 'Refresh'}
                 </button>
             </div>
             <div className="mt-4 text-sm">
-                <p className="font-semibold text-white">State:</p>
-                <p className="text-gray-300">{vehicle.state}</p>
+                <p className="flex items-center font-semibold text-white">
+                    <Power className="mr-2 h-4 w-4 text-cyan-400" />
+                    State:
+                </p>
+                <p className="text-gray-300 ml-6">{vehicle.state}</p>
             </div>
 
             {vehicle.vehicle_state?.tpms_pressure_fl !== undefined && (
                  <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <p className="font-semibold text-white">Tire Pressure (PSI):</p>
-                        <div className="grid grid-cols-2 gap-2 mt-1">
+                        <p className="flex items-center font-semibold text-white">
+                            <Gauge className="mr-2 h-4 w-4 text-cyan-400" />
+                            Tire Pressure (PSI):
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 mt-1 ml-6">
                             <p>FL: {barToPsi(vehicle.vehicle_state.tpms_pressure_fl)}</p>
                             <p>FR: {barToPsi(vehicle.vehicle_state.tpms_pressure_fr)}</p>
                             <p>RL: {barToPsi(vehicle.vehicle_state.tpms_pressure_rl)}</p>
