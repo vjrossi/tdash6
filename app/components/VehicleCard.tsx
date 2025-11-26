@@ -114,9 +114,9 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
             <div className="p-6 border-t border-gray-700/50 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <DataPoint icon={Gauge} label="Odometer" value={Math.round(vehicle_state.odometer).toLocaleString()} unit="mi" />
-                <DataPoint icon={ParkingCircle} label="Gear" value={drive_state.shift_state || 'P'} />
+                <DataPoint icon={ParkingCircle} label="Gear" value={drive_state?.shift_state || 'P'} />
                 <DataPoint icon={ShieldCheck} label="Sentry Mode" value={vehicle_state.sentry_mode ? 'On' : 'Off'} />
-                <DataPoint icon={MapPin} label="Location" value={drive_state.latitude ? 'Available' : 'Unavailable'} />
+                <DataPoint icon={MapPin} label="Location" value={drive_state?.latitude ? 'Available' : 'Unavailable'} />
             </div>
         </div>
     );

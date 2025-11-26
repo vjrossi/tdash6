@@ -14,7 +14,7 @@ export interface VehicleData {
         odometer: number;
         sentry_mode: boolean;
     };
-    drive_state: {
+    drive_state?: {
         shift_state: string | null;
         latitude: number;
     };
