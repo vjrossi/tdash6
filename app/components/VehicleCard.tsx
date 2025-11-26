@@ -8,6 +8,9 @@ interface VehicleCardProps {
     vehicle: Vehicle;
 }
 
+// Helper function to convert BAR to PSI
+const barToPsi = (bar: number) => Math.round(bar * 14.5038);
+
 export function VehicleCard({ vehicle: initialVehicle }: VehicleCardProps) {
     const [vehicle, setVehicle] = useState(initialVehicle);
     const [loading, setLoading] = useState(false);
@@ -53,12 +56,12 @@ export function VehicleCard({ vehicle: initialVehicle }: VehicleCardProps) {
             {vehicle.vehicle_state?.tpms_pressure_fl !== undefined && (
                  <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <p className="font-semibold text-white">Tire Pressure:</p>
+                        <p className="font-semibold text-white">Tire Pressure (PSI):</p>
                         <div className="grid grid-cols-2 gap-2 mt-1">
-                            <p>FL: {vehicle.vehicle_state.tpms_pressure_fl}</p>
-                            <p>FR: {vehicle.vehicle_state.tpms_pressure_fr}</p>
-                            <p>RL: {vehicle.vehicle_state.tpms_pressure_rl}</p>
-                            <p>RR: {vehicle.vehicle_state.tpms_pressure_rr}</p>
+                            <p>FL: {barToPsi(vehicle.vehicle_state.tpms_pressure_fl)}</p>
+                            <p>FR: {barToPsi(vehicle.vehicle_state.tpms_pressure_fr)}</p>
+                            <p>RL: {barToPsi(vehicle.vehicle_state.tpms_pressure_rl)}</p>
+                            <p>RR: {barToPsi(vehicle.vehicle_state.tpms_pressure_rr)}</p>
                         </div>
                     </div>
                 </div>
