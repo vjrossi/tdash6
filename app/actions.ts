@@ -138,7 +138,7 @@ export async function getVehicleData(vehicleId: string) {
             return { success: false, error: errorBody.error || `Failed to fetch vehicle status. Status: ${initialResponse.status}` };
         }
 
-        let vehicle = (await initialResponse.json()).response;
+        const vehicle = (await initialResponse.json()).response;
 
         // If the vehicle is asleep, wake it up
         if (vehicle.state !== 'online') {
@@ -172,7 +172,7 @@ export async function getVehicleData(vehicleId: string) {
     }
 }
 
-async function wakeUpVehicle(vehicleId: string, accessToken: string) {
+export async function wakeUpVehicle(vehicleId: string, accessToken: string) {
     const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
     if (!baseUrl) {
         return { success: false, error: "API base URL is not configured." };

@@ -24,10 +24,14 @@ export default function CallbackClientPage() {
         }
       };
       performExchange();
-    } else {
+    } 
+  }, [code, router]);
+
+  useEffect(() => {
+    if (!code) {
         setError("Did not receive an authorization code from Tesla.");
     }
-  }, [code, router]);
+  }, [code]);
 
   return (
     <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">

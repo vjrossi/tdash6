@@ -3,7 +3,6 @@ import { VehicleCard } from '@/app/components/VehicleCard';
 import { ErrorDisplay } from '@/app/components/ErrorDisplay';
 import { LogoutButton } from '@/app/components/LogoutButton';
 import { Vehicle } from '@/lib/types';
-import Link from 'next/link';
 
 export default async function DashboardPage() {
     const vehicles: Vehicle[] | null = await getVehicles();

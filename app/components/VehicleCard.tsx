@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Vehicle } from '@/lib/types';
 import { getVehicleData } from '@/app/actions';
 
@@ -13,7 +13,7 @@ export function VehicleCard({ vehicle: initialVehicle }: VehicleCardProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetch_vehicle_data = async () => {
+    const fetch_vehicle_data = useCallback(async () => {
         setLoading(true);
         setError(null);
         const result = await getVehicleData(vehicle.id_s);
@@ -23,10 +23,11 @@ export function VehicleCard({ vehicle: initialVehicle }: VehicleCardProps) {
             setError(result.error);
         }
         setLoading(false);
-    };
+    }, [vehicle.id_s]);
 
     useEffect(() => {
-        fetch_vehicle_data();
+        // We don't want to fetch the data on the initial render,
+        // as the server has already provided the initial vehicle data.
     }, []);
 
     return (
@@ -66,4 +67,3 @@ export function VehicleCard({ vehicle: initialVehicle }: VehicleCardProps) {
         </div>
     );
 }
-
