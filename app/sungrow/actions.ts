@@ -166,19 +166,31 @@ export async function getSungrowPlantDetails(): Promise<SungrowPlantBasicInfo[]>
       headers: requestHeaders,
       body: JSON.stringify(requestBody),
     });
-
+    
     const text = await response.text();
     if (!response.ok) {
       console.error('PlantDetail HTTP error', response.status, text);
       return [];
     }
-
+    
     const data = JSON.parse(text);
-    if (data.result_code !== '1') {
-      console.error('PlantDetail error', data.result_msg);
+    
+    // 🔥 token expired → try refresh
+    if (data.result_code === 'er_token_login_invalid') {
+      console.log('Access token expired. Trying refresh...');
+      const refreshed = await refreshSungrowToken();
+      if (refreshed) {
+        console.log('Retrying plant details after refresh...');
+        return await getSungrowPlantDetails();
+      }
       return [];
     }
-
+    
+    if (data.result_code !== '1') {
+      console.error('PlantDetail error:', data.result_msg);
+      return [];
+    }
+    
     const rd = data.result_data;
     if (!rd || rd.code !== '1' || !Array.isArray(rd.data_list)) return [];
 
@@ -197,5 +209,84 @@ export async function getSungrowPlantDetails(): Promise<SungrowPlantBasicInfo[]>
   } catch (err) {
     console.error('PlantDetail error', err);
     return [];
+  }
+}
+
+//
+// REFRESH TOKEN
+//
+export async function refreshSungrowToken(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get('sungrow_refresh_token')?.value;
+  const accessToken = cookieStore.get('sungrow_access_token')?.value;
+
+  if (!refreshToken || !accessToken) {
+    console.error('No refresh token found.');
+    return false;
+  }
+
+  const url = `${SUNGROW_BASE_URL}openapi/apiManage/refreshToken`;
+
+  const requestBody = {
+    grant_type: 'refresh_token',
+    appkey: SUNGROW_APP_KEY,
+    refresh_token: refreshToken,
+  };
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-access-key': SUNGROW_SECRET_KEY,
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+      console.error('[Refresh] HTTP error:', res.status, text);
+      return false;
+    }
+
+    const data = JSON.parse(text);
+
+    if (data.result_code !== '1') {
+      console.error('[Refresh] API error:', data.result_msg);
+      return false;
+    }
+
+    const rd = data.result_data;
+
+    const secure = process.env.NODE_ENV === 'production';
+    const cookieOptions = { httpOnly: true, secure, path: '/' as const };
+
+    // update tokens
+    cookieStore.set('sungrow_access_token', rd.access_token, {
+      ...cookieOptions,
+      maxAge: Number(rd.expires_in) || 86400,
+    });
+
+    cookieStore.set('sungrow_refresh_token', rd.refresh_token, cookieOptions);
+
+    // IMPORTANT: Only overwrite ps_list if Sungrow sends a non-empty list
+    if (Array.isArray(rd.auth_ps_list) && rd.auth_ps_list.length > 0) {
+      const plantIds = rd.auth_ps_list.map((p: any) => p.ps_id);
+      cookieStore.set('sungrow_ps_list', JSON.stringify(plantIds), cookieOptions);
+      console.log('[Refresh] Updated plant list from refresh response');
+    } else {
+      console.log('[Refresh] Keeping existing plant list');
+    }
+
+    console.log('🔄 Token refreshed successfully');
+    return true;
+
+  } catch (err) {
+    console.error('[Refresh] Exception:', err);
+    return false;
   }
 }
