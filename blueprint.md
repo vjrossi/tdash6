@@ -19,9 +19,11 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
     3.  After approving the request, they are redirected back to the application at `/auth/sungrow`.
     4.  A server action (`getSungrowToken`) automatically exchanges the received authorization `code` for an access token.
     5.  The access token data is then displayed on the page for verification.
-*   **Token Exchange:** A server action now correctly handles exchanging the authorization code for an access token. The request includes the `grant_type: 'authorization_code'`, `appkey`, `code`, and `redirect_uri` in the JSON body, and sends the `x-access-key` (the App Secret) in the headers. This matches the requirements specified in the Sungrow API documentation.
-*   **Configuration:** All API keys and redirect URLs are managed securely via environment variables, compatible with Vercel's production environment.
-*   **Error Handling:** Robust error handling and logging have been implemented in the server action to provide clear, detailed error messages from the Sungrow API, preventing generic HTTP error pages from obscuring the root cause.
+*   **Token Exchange:** A server action handles exchanging the authorization code for an access token. The request includes the `grant_type: 'authorization_code'`, `appkey`, `code`, and `redirect_uri` in the JSON body, and sends the `x-access-key` (the App Secret) in the headers.
+*   **Configuration:** All API keys and redirect URLs are managed securely via environment variables.
+*   **Error Handling & Logging:**
+    *   **Server-Side:** The `getSungrowToken` action now performs detailed logging of the request body and the raw response from the Sungrow API. This provides complete visibility into the API transaction in the Vercel function logs.
+    *   **Client-Side:** The `/auth/sungrow` callback page logs the full error object to the browser console and displays any raw HTML or text error received from the server directly on the page. This prevents generic messages from hiding the true nature of an error.
 *   **Status:** **Completed**
 
 ## Styling & Design
@@ -29,12 +31,12 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
 *   **Framework:** Uses Tailwind CSS for a clean, modern, and beautiful dark-mode design.
 *   **Aesthetics:** UI components are polished with icons, balanced layouts, and clear typography.
 
-## Current Plan: Fix Sungrow Token Exchange Request
+## Current Plan: Implement Comprehensive Logging
 
-*   **Objective:** Add the missing `grant_type` parameter to the Sungrow token exchange request body to resolve the `403` error.
+*   **Objective:** Add detailed client and server-side logging to the Sungrow authentication flow for easier debugging.
 *   **Status:** Completed
 *   **Steps:**
-    1.  Updated the `getSungrowToken` action in `app/sungrow/actions.ts` to include `grant_type: 'authorization_code'` in the POST request body.
-    2.  Improved error logging to capture the full response body on failure.
-    3.  Updated `blueprint.md` to reflect the change.
+    1.  Updated `app/sungrow/actions.ts` to log the outgoing request body and the full raw response from the Sungrow API.
+    2.  Updated `app/auth/sungrow/page.tsx` to log error details to the browser console and render the raw error response on the page.
+    3.  Updated `blueprint.md` to document the new logging features.
     4.  Commit and push changes for redeployment.
