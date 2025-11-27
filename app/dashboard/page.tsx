@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { getVehicles, getVehicleData, logout } from '@/app/actions';
 import { VehicleCard } from '@/app/components/VehicleCard';
@@ -22,7 +22,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchVehicleData = async () => {
+    const fetchAllVehicleData = async () => {
         setLoading(true);
         setError(null);
         try {
@@ -53,11 +53,27 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
-        fetchVehicleData();
+        fetchAllVehicleData();
     }, []);
 
-    const handleRefresh = async () => {
-        await fetchVehicleData();
+    const handleRefresh = async (vehicleId: string) => {
+        try {
+            const dataResult = await getVehicleData(vehicleId);
+            setVehiclesWithData(currentVehicles =>
+                currentVehicles.map(v => {
+                    if (v.id_s === vehicleId) {
+                        return {
+                            ...v,
+                            vehicle_data: dataResult.success ? dataResult.data : null,
+                            error: !dataResult.success ? dataResult.error : null,
+                        };
+                    }
+                    return v;
+                })
+            );
+        } catch (e) {
+            console.error("Failed to refresh vehicle data", e);
+        }
     };
 
     return (
@@ -76,7 +92,7 @@ export default function DashboardPage() {
                     <div className="text-center py-12">
                         <p className="text-red-500 mb-4">{error}</p>
                         <button
-                            onClick={handleRefresh}
+                            onClick={() => fetchAllVehicleData()}
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                         >
                             Try Again
@@ -85,7 +101,7 @@ export default function DashboardPage() {
                 ) : vehiclesWithData.length > 0 ? (
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                         {vehiclesWithData.map((vehicle) => (
-                            <VehicleCard key={vehicle.id_s} vehicle={vehicle} onRefresh={handleRefresh} />
+                            <VehicleCard key={vehicle.id_s} vehicle={vehicle} onRefresh={() => handleRefresh(vehicle.id_s)} />
                         ))}
                     </div>
                 ) : (
