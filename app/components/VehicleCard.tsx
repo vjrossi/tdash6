@@ -3,13 +3,15 @@
 import { Vehicle } from '@/lib/types';
 import {
     BatteryCharging, Thermometer, ShieldCheck,
-    MapPin, Gauge, Fan, Snowflake, Sun, ParkingCircle
+    MapPin, Gauge, Fan, Snowflake, Sun, ParkingCircle, RefreshCw
 } from 'lucide-react';
+import { useState } from 'react';
 
 // --- PROPS AND UTILS ---
 
 interface VehicleCardProps {
     vehicle: Vehicle;
+    onRefresh: () => Promise<void>;
 }
 
 const barToPsi = (bar: number) => Math.round(bar * 14.5038);
@@ -53,8 +55,7 @@ const CircularProgress = ({ value }: { value: number }) => {
                     stroke="currentColor"
                     fill="transparent"
                     r="45"
-                    cx="64"
-                    cy="64"
+                    cx="64"                    cy="64"
                 />
             </svg>
             <div className="absolute flex flex-col items-center">
@@ -76,7 +77,17 @@ const TyrePressure = ({ label, pressure }: { label: string; pressure?: number })
 
 // --- MAIN COMPONENT ---
 
-export function VehicleCard({ vehicle }: VehicleCardProps) {
+export function VehicleCard({ vehicle, onRefresh }: VehicleCardProps) {
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await onRefresh();
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
     // Error state
     if (vehicle.error || !vehicle.vehicle_data) {
         return (
@@ -97,9 +108,14 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
     return (
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-cyan-500/20">
             {/* Header */}
-            <div className="p-6 bg-gradient-to-br from-gray-900 to-gray-800/50">
-                <h3 className="text-2xl font-bold text-cyan-400">{vehicle.display_name}</h3>
-                <p className="text-gray-400 text-sm">{vehicle.vin}</p>
+            <div className="p-6 bg-gradient-to-br from-gray-900 to-gray-800/50 flex justify-between items-start">
+                <div>
+                    <h3 className="text-2xl font-bold text-cyan-400">{vehicle.display_name}</h3>
+                    <p className="text-gray-400 text-sm">{vehicle.vin}</p>
+                </div>
+                <button onClick={handleRefresh} disabled={isRefreshing} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
             </div>
 
             {/* Main Data Grid */}
