@@ -1,0 +1,116 @@
+Obtain token via authorization code
+Post
+/openapi/apiManage/token
+
+Obtain token via authorization code
+1. Request parameters
+Request parameters
+Parameter type
+Required
+Parameter example
+Parameter description
+code
+String
+Yes
+T3xxjv
+Authorization Code
+grant_type
+String
+Yes
+authorization_code
+Authorization type, fixed value: authorization_code
+redirect_uri
+String
+Yes
+https://web3.isolarcloud.com.cn
+Redirect Address
+appkey
+String
+Yes
+B968E49385CBD8C74587A374E7B1D21A
+AppKey
+
+{
+    "grant_type":"authorization_code",
+    "code":"rFrnww",
+    "redirect_uri":"https://web3.isolarcloud.com.cn"
+}
+
+2. Return parameters
+Return parameters
+Data type
+Example value
+Description
+req_serial_num
+String
+20240920d9184e7fa2e9a031e5e96f5b
+Request Sequence Number
+result_code
+String
+1
+Status Code 1: Success 2: Invalid authorization code 3: Unauthorized access 4: Invalid client 5: The redirect address does not match 6: The grant type is not supported
+result_msg
+String
+success
+Prompt Message
+result_data
+Map
+--
+Result Data
+result_data.access_token
+String
+7b8e7dd6-b0c2-4d7e-84b0-XXXXae39aae4
+access_token
+result_data.refresh_token
+String
+b2bd40bd-41b0-4329-9150-0XXXXXe8ca2
+refresh_token
+result_data.expires_in
+String
+172799
+Valid time, in s
+result_data.auth_ps_list
+List
+["700667048","700009368","700007278"]
+List of authorized plants. The returned information is plant ID.
+result_data.auth_user
+Integer
+408056
+User ID
+result_data.token_type
+String
+bearer
+bearer
+2.1 Success examples
+
+{
+	"req_serial_num": "20240920d9184e7fa2e9a031e5e96f5b",
+	"result_code": "1",
+	"result_msg": "success",
+	"result_data": {
+		"access_token": "7b8e7dd6-b0c2-4d7e-84b0-3089ae39aae4",
+		"token_type": "bearer",
+		"refresh_token": "b2bd40bd-41b0-4329-9150-070a25ce8ca2",
+		"expires_in": 172799,
+		"auth_ps_list": [
+			"700667048",
+			"700009368",
+			"700007278",
+			"342472479",
+			"700666230",
+			"700666205",
+			"542241",
+			"342469869",
+			"342469867"
+		],
+		"auth_user": 408056
+	}
+}
+
+2.2 Failure example
+{
+  "req_serial_num": "2024091132fd4f358979fc436d88e472",
+  "result_code": "2",
+  "result_msg": "Invalid authorization code: rFrnww2",
+  "result_data": null
+}

@@ -1,0 +1,182 @@
+Query Plant List
+Post
+/openapi/platform/queryPowerStationList
+
+Query Authorized Plants
+1. Request parameters
+Request parameters
+Parameter type
+Required
+Parameter example
+Parameter description
+ps_type
+String
+No
+1,3,4,5,6,7,8
+Plant Type (separate multiple values with commas, all values are queried by default): 1: Utility Plant; 3: Distributed PV Plant; 4: Residential PV Plant; 5: Residential Energy Storage Plant; 6: Village Plant; 7: Distributed Energy Storage Plant; 8: Poverty Alleviation Plant; 9: Wind Power Plant; 12: C&I Energy Storage Plant
+ps_name
+String
+No
+PlantA
+Plant Name (Fuzzy Search)
+valid_flag
+String
+No
+1,3
+Plant Status: (1: Normal; 2: Disabled; 3: Connected). If not passed, plants with a status of 1 are queried. Separate values with commas to query multiple statuses
+page
+Integer
+Yes
+1
+Page
+size
+Integer
+Yes
+10
+Page Size
+
+
+{
+    "ps_type":"1,3,4,5,6,7,8",
+    "ps_name":"",
+    "page": 1,
+    "size": 10,
+    "valid_flag":"1,3"
+}
+
+2. Return parameters
+Return parameters
+Data type
+Example value
+Description
+req_serial_num
+String
+2022122373544aab92527faf91b7addc
+Request Sequence Number
+result_code
+String
+1
+Error Code
+result_msg
+String
+success
+Prompt Message
+result_data
+Map
+--
+Returned Data
+result_data.row_count
+String
+1
+Records
+result_data.pageList
+List
+--
+Paginated Data
+result_data.pageList.ps_id
+Integer
+729056
+Plant ID
+result_data.pageList.ps_name
+String
+PlantA
+Plant Name
+result_data.pageList.description
+String
+Record the power generation data of rooftop photovoltaic panels
+About the Plant
+result_data.pageList.ps_type
+Integer
+3
+Plant Type: 1: Utility Plant; 3: Distributed PV Plant; 4: Residential PV Plant; 5: Residential Energy Storage Plant; 6: Village Plant; 7: Distributed Energy Storage Plant; 8: Poverty Alleviation Plant; 9: Wind Power Plant; 12: C&I Energy Storage Plant
+result_data.pageList.online_status
+Integer
+1
+Plant Deployment (1: Deployed; 0: Undeployed)
+result_data.pageList.valid_flag
+Integer
+3
+Plant Status (1: Normal; 2: Disabled; 3: Connected)
+result_data.pageList.grid_connection_status
+Integer
+0
+Grid Connection Status
+result_data.pageList.install_date
+String
+2022-11-07 15:37:40
+Plant Creation Time (format: yyyy-MM-dd HH:mm:ss)
+result_data.pageList.ps_location
+String
+Longtu Rd, Shushan District, Hefei, Anhui, China
+Plant Location
+result_data.pageList.latitude
+String
+41.615866
+Longitude
+result_data.pageList.longitude
+String
+120.398332
+Latitude
+result_data.pageList.ps_fault_status
+Integer
+3
+Plant Fault Status (1: Fault; 2: Alarm; 3: Normal)
+result_data.pageList.connect_type
+Integer
+1
+Grid Connection Type: (1: Full Grid; 2: Self-Generated and Self-Used (Surplus Power); 3: Self-Generated and Self-Used (No Feed Network); 4: Off-Grid)
+result_data.pageList.update_time
+String
+2024-08-26 14:03:38
+Update Time
+result_data.pageList.ps_current_time_zone
+String
+GMT-6
+Current Plant Time Zone
+result_data.pageList.grid_connection_time
+String
+2024-08-26 14:03:38
+Grid-connected Date
+result_data.pageList.build_status
+Integer
+2
+Plant Construction Status (0: Not Started; 1: Under Construction; 2: Connected; 3: Planned; 4: Not Connected)
+
+
+2.1 Success examples
+{
+    "req_serial_num": "2024082695fb4e3fb844e653ed4924ce",
+    "result_code": "1",
+    "result_msg": "success",
+    "result_data": {
+        "pageList": [
+            {
+                "ps_name": "iHM测试",
+                "online_status": 0,
+                "latitude": 0,
+                "description": null,
+                "valid_flag": 1,
+                "grid_connection_status": 0,
+                "ps_fault_status": 1,
+                "ps_location": "阳光电源",
+                "update_time": "2024-08-26 14:03:38",
+                "ps_current_time_zone": "GMT-6",
+                "ps_id": 700666130,
+                "grid_connection_time": null,
+                "connect_type": 1,
+                "install_date": "2024-08-22 05:32:42",
+                "build_status": 2,
+                "ps_type": 5,
+                "longitude": 0
+            }
+        ],
+        "rowCount": 1
+    }
+}
+
+2.2 Failure example
+{
+    "error": "invalid_token",
+    "error_description": "Invalid access token",
+    "req_serial_num": "202408265afa4caa9e21089c9674390f"
+}

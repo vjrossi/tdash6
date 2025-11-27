@@ -1,0 +1,86 @@
+Refresh Token
+Post
+/openapi/apiManage/refreshToken
+
+Refresh Token Interface
+1. Request parameters
+Request parameters
+Parameter type
+Required
+Parameter example
+Parameter description
+refresh_token
+String
+Yes
+c7db59ec-5bb5-49ea-841e-eXXXX90aa4
+refresh_token
+
+{
+    "refresh_token":"5cbf5454-2fdd-48d2-9394-a54a7120661e"
+}
+
+2. Return parameters
+Return parameters
+Data type
+Example value
+Description
+req_serial_num
+String
+20240921278543a18e3410a16fd00f4b
+Request Sequence Number
+result_code
+String
+1
+Status Code, 1: Success
+result_msg
+String
+success
+Prompt Message
+result_data
+String
+--
+Result Data
+result_data.code
+Map
+1
+1: Succeeded 2: No authorization information -1: Authorization server token refresh failed -2: Refresh_token expired 4: Invalid request 5: Invalid refresh token
+result_data.access_token
+String
+669d96c6-3190-49b2-bc8c-XXXX8e4cf2f1
+access_token
+result_data.refresh_token
+String
+c7db59ec-5bb5-49ea-841e-XXXX02f90aa4
+refresh_token
+result_data.expires_in
+String
+3450872
+Valid time, in s
+result_data.token_type
+String
+bearer
+token_type
+
+2.1 Success examples
+{
+    "req_serial_num": "20240921278543a18e3410a16fd00f4b",
+    "result_code": "1",
+    "result_msg": "success",
+    "result_data": {
+        "access_token": "eb8a3be3-6a25-4796-b256-cb2553965063",
+        "refresh_token": "6ada71eb-07db-4de9-a2a7-43f7a021ee8a",
+        "code": "1",
+        "token_type": "bearer",
+        "expires_in": 172799
+    }
+}
+
+2.2 Failure example
+{
+  "req_serial_num": "20240911802345e5a9af16fc256e7e6b",
+  "result_code": "1",
+  "result_msg": "success",
+  "result_data": {
+      "code": "2"
+  }
+}

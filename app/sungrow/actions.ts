@@ -8,7 +8,6 @@ export async function getSungrowToken(code: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-access-key': SUNGROW_SECRET_KEY!,
       },
       body: JSON.stringify({
         appkey: SUNGROW_APP_KEY,
