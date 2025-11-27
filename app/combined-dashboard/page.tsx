@@ -193,14 +193,47 @@ function SungrowPanel() {
     );
   }
 
+  if (!plants.length) {
+    return (
+      <div className="space-y-6">
+        <header className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-xl font-semibold">
+            <Leaf className="h-6 w-6 text-emerald-400" />
+            Sungrow Dashboard
+          </h2>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-xs hover:border-red-500 hover:bg-red-600/10 hover:text-red-300"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </header>
+
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-8 text-center text-slate-400 text-sm">
+          No power stations found for your Sungrow account.
+        </div>
+      </div>
+    );
+  }
+
+  const primary = plants[0];
+  const others = plants.slice(1);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <header className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-xl font-semibold">
-          <Leaf className="h-6 w-6 text-emerald-400" />
-          Sungrow Dashboard
-        </h2>
+        <div>
+          <h2 className="flex items-center gap-2 text-xl font-semibold">
+            <Leaf className="h-6 w-6 text-emerald-400" />
+            Sungrow Dashboard
+          </h2>
+          <p className="mt-1 text-xs text-slate-400">
+            Overview of your Sungrow power stations.
+          </p>
+        </div>
 
         <button
           onClick={handleLogout}
@@ -211,34 +244,115 @@ function SungrowPanel() {
         </button>
       </header>
 
-      {/* Plants */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-slate-200">
-          Your Power Stations
-        </h3>
+      {/* Primary plant hero card */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg shadow-black/40">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">{primary.name}</h3>
+            <p className="text-xs text-slate-500">ID: {primary.psId}</p>
 
-        {plants.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-center text-slate-400 text-sm">
-            No plants found.
+            <div className="mt-3 flex items-center gap-2 text-sm text-slate-300">
+              <MapPin className="h-4 w-4 text-slate-400" />
+              <span>{primary.location || 'No location set'}</span>
+            </div>
           </div>
-        ) : (
+
+          {/* This area is ready for live metrics later */}
+          <div className="rounded-xl bg-slate-900/80 border border-slate-800 px-4 py-3 text-sm">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Primary metrics
+            </p>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Power className="h-4 w-4 text-emerald-400" />
+                <span className="text-slate-200 font-medium">
+                  {primary.capacityKw != null
+                    ? `${primary.capacityKw} W capacity`
+                    : 'Capacity: Unknown'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <Clock className="h-4 w-4" />
+                <span>
+                  Installed:{' '}
+                  {primary.installDate || 'Unknown install date'}
+                </span>
+              </div>
+              <div className="text-xs text-slate-400">
+                Type: {primary.typeName || 'Unknown'} · Timezone:{' '}
+                {primary.timezone || 'N/A'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stat tiles (similar feel to Tesla’s little panels) */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Capacity
+            </p>
+            <p className="text-2xl font-semibold">
+              {primary.capacityKw != null ? (
+                <>
+                  {primary.capacityKw}
+                  <span className="ml-1 text-sm text-slate-400">W</span>
+                </>
+              ) : (
+                <span className="text-sm text-slate-400">Unknown</span>
+              )}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Install Date
+            </p>
+            <p className="text-sm text-slate-200">
+              {primary.installDate || 'Unknown'}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Timezone
+            </p>
+            <p className="text-sm text-slate-200">
+              {primary.timezone || 'N/A'}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Type
+            </p>
+            <p className="text-sm text-slate-200">
+              {primary.typeName || 'Unknown'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Other plants (if any) in smaller cards */}
+      {others.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Other Power Stations
+          </h3>
           <div className="grid md:grid-cols-2 gap-4">
-            {plants.map((p) => (
+            {others.map((p) => (
               <div
                 key={p.psId}
-                className="rounded-xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/40 text-sm"
+                className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm"
               >
-                <div className="mb-4">
-                  <h4 className="text-base font-semibold">{p.name}</h4>
-                  <p className="text-xs text-slate-500">ID: {p.psId}</p>
-                </div>
+                <h4 className="text-base font-semibold mb-1">{p.name}</h4>
+                <p className="text-xs text-slate-500 mb-2">ID: {p.psId}</p>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-slate-400" />
                     <span>{p.location || 'No location'}</span>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <Power className="h-4 w-4 text-slate-400" />
                     <span>
@@ -247,25 +361,22 @@ function SungrowPanel() {
                         : 'Unknown capacity'}
                     </span>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-slate-400" />
-                    <span>{p.installDate || 'Unknown install date'}</span>
-                  </div>
-
-                  <div className="text-slate-400 text-[11px]">
-                    Type: {p.typeName || 'Unknown'} · Timezone:{' '}
-                    {p.timezone || 'N/A'}
+                    <span className="text-xs">
+                      {p.installDate || 'Unknown install date'}
+                    </span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 /* ---------- Combined page shell ---------- */
 
