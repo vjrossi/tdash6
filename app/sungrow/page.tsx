@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 export default function SungrowPage() {
+  // Correctly construct the URL without duplicating the protocol in the redirectUrl
   const sungrowAuthorizeUrl = `https://auweb3.isolarcloud.com/#/authorized-app?cloudId=7&applicationId=583&redirectUrl=${process.env.NEXT_PUBLIC_SUNGROW_REDIRECT_URL}`;
 
   return (
