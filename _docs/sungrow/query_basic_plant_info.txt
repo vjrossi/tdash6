@@ -1,0 +1,369 @@
+Query Basic Plant Info
+Post
+/openapi/platform/getPowerStationDetail
+
+Query basic plant info by plant ID. Supports batch queries.
+1. Request parameters
+Request parameters
+Parameter type
+Required
+Parameter example
+Parameter description
+ps_ids
+String
+Yes
+123
+The plant ID, separate multiple values with commas (can query up to 20 IDs—either the ps_ids or sns must be provided; when both are passed, the ps_ids is queried; the sns is only used if the ps_ids query returns empty)
+sns
+String
+No
+A123***,A123***,A123***
+Communication Device SN (separate multiple values with commas (you can query up to 20 SNs); the ps_ids is queried and the sns is only used if the ps_ids query returns empty)
+is_get_ps_remarks
+String
+No
+1
+Get Plant Remarks?: (1: Yes; defaults to no if not passed)
+
+{
+    "ps_ids":"476178,473465,407069,700063254,195529,428464,230423,335886,700665992",
+    "sn":"",
+    "lang": "",
+    "is_get_ps_remarks": "1"
+}
+
+2. Return parameters
+Return parameters
+Data type
+Example value
+Description
+req_serial_num
+String
+2024082911274395bcc44948453e2049
+Request Sequence Number
+result_code
+String
+1
+Error Code
+result_msg
+String
+success
+Prompt Message
+result_data
+Map
+--
+Returned Data
+result_data.code
+String
+1
+Endpoint Response Code: (0: Query failed, endpoint exception; 1: Success; 4: The ps_ids was empty and no plants were found via sns; 5: The queried plants or sns exceeds the limit; 6: Could not find any basic plant info via ps_ids; 7: No authorized plants in ps_ids
+result_data.not_authorization_ps_list
+List
+789***
+Unauthorized Plant ID Collection in ps_ids
+result_data.data_list
+List
+--
+Basic Plant Information
+result_data.data_list.ps_id
+Integer
+123
+Plant ID
+result_data.data_list.ps_key
+String
+123_11_0_0
+Plant ps_key
+result_data.data_list.ps_name
+String
+PlantA
+Plant Name
+result_data.data_list.description
+String
+Record the power generation data of rooftop photovoltaic panels
+About the Plant
+result_data.data_list.ps_type
+Integer
+3
+Plant Type: 1: Utility Plant; 3: Distributed PV Plant; 4: Residential PV Plant; 5: Residential Energy Storage Plant; 6: Village Plant; 7: Distributed Energy Storage Plant; 8: Poverty Alleviation Plant; 9: Wind Power Plant; 12: C&I Energy Storage Plant
+result_data.data_list.ps_type_name
+String
+Commercial PV
+Plant Type Name
+result_data.data_list.online_status
+Integer
+0
+Plant Deployment (1: Deployed; 0: Undeployed)
+result_data.data_list.build_status
+Integer
+2
+Plant Construction Status (0: Not Started; 1: Under Construction; 2: Connected; 3: Planned; 4: Not Connected)
+result_data.data_list.install_date
+String
+2022-05-27 11:33:06
+Plant Creation Time (format: yyyy-MM-dd HH:mm:ss)
+result_data.data_list.connect_type
+Integer
+2
+Grid Connection Type: (1: Full Grid; 2: Self-Generated and Self-Used (Surplus Power); 3: Self-Generated and Self-Used (No Feed Network); 4: Off-Grid)
+result_data.data_list.grid_connection_time
+Integer
+20230303115625
+Grid-connected Date
+result_data.data_list.ps_fault_status
+Integer
+3
+Plant Fault Status (1: Fault; 2: Alarm; 3: Normal)
+result_data.data_list.fault_count
+Integer
+0
+Fault Count
+result_data.data_list.alarm_count
+Integer
+0
+Alarms
+result_data.data_list.ps_location
+String
+Longtu Rd, Shushan District, Hefei, Anhui, China
+Plant Location
+result_data.data_list.latitude
+String
+41.69395123697499
+Latitude
+result_data.data_list.longitude
+String
+123.18212151404492
+Longitude
+result_data.data_list.install_power
+Integer
+10000
+Installed Power
+result_data.data_list.design_capacity_pcs
+Integer
+100
+ES installed power
+result_data.data_list.design_capacity_battery
+Integer
+100
+ES battery capacity
+result_data.data_list.ps_feedin_power_price_wh
+String
+0.001
+Plant Feed Tariff (per Wh)
+result_data.data_list.ps_feedin_power_price_kwh
+String
+1
+Plant Feed Tariff (per kWh)
+result_data.data_list.ps_consumption_power_price_wh
+String
+0.001
+Plant Consumption Tariff (per Wh)
+result_data.data_list.ps_consumption_power_price_kwh
+String
+1
+Plant Consumption Tariff (per kWh)
+result_data.data_list.power_price_unit
+String
+CNY
+Tariff Unit
+result_data.data_list.ps_current_time_zone
+String
+GMT+8
+Plant Time Zone
+result_data.data_list.owner_mobile
+String
+181****1234
+Owner's Phone
+result_data.data_list.owner_email
+String
+123***@qq.com
+Owner's Email Address
+result_data.data_list.communication_dev_detail_list
+List
+[{"is_enable": 1,"sn": "A2006032680"},{"is_enable": 1,"sn": "A2006032681"}]
+Plant Communication Device SN
+result_data.data_list.communication_dev_detail_list.is_enable
+Integer
+1
+SN Status: (0: Disabled; 1: Normal)
+result_data.data_list.communication_dev_detail_list.sn
+String
+A20***32682
+Communication Device S/N
+result_data.data_list.ps_remarks
+Map
+Record rooftop power generation data for the power station
+Remarks
+result_data.data_list.ps_remarks.remark1
+String
+Record rooftop power generation data for the power station
+Remark 1
+result_data.data_list.ps_remarks.remark2
+String
+Record rooftop power generation data for the power station
+Remark 2
+result_data.data_list.ps_remarks.remark3
+String
+Record rooftop power generation data for the power station
+Remark 3
+result_data.data_list.ps_remarks.remark4
+String
+Record rooftop power generation data for the power station
+Remark 4
+result_data.data_list.ps_remarks.remark5
+String
+Record rooftop power generation data for the power station
+Remark 5
+result_data.data_list.param_income_unit_name
+String
+CNY
+Currency Unit
+result_data.data_list.user_moble_tel
+String
+181****1234
+Property owner's mobile phone number
+2.1 Success examples
+
+{
+    "req_serial_num": "20240829c4ba4ec98875ca2f1e7e8175",
+    "result_code": "1",
+    "result_msg": "success",
+    "result_data": {
+        "data_list": [
+            {
+                "alarm_count": 0,
+                "ps_key": "407069_11_0_0",
+                "ps_feedin_power_price_kwh": null,
+                "latitude": null,
+                "description": null,
+                "ps_remarks": {},
+                "ps_fault_status": 3,
+                "ps_type_name": "户用光伏",
+                "build_status": 2,
+                "install_date": "2022-03-26 16:41:25",
+                "ps_consumption_power_price_kwh": null,
+                "ps_type": 4,
+                "email": null,
+                "longitude": null,
+                "param_income_unit_name": "元",
+                "ps_name": "B2151302118电站",
+                "online_status": 1,
+                "ps_location": null,
+                "ps_consumption_power_price_wh": null,
+                "ps_current_time_zone": "GMT+8",
+                "user_moble_tel": null,
+                "power_price_unit": "",
+                "ps_id": 407069,
+                "ps_feedin_power_price_wh": null,
+                "communication_dev_detail_list": [
+                    {
+                        "is_enable": 1,
+                        "sn": "S1297504126230954"
+                    }
+                ],
+                "connect_type": 2,
+                "fault_count": 0,
+                "install_power": 20000,
+                "design_capacity_pcs": 200,
+                "design_capacity_battery":1000
+            },
+            {
+                "alarm_count": 0,
+                "ps_key": "473465_11_0_0",
+                "ps_feedin_power_price_kwh": "0.3779",
+                "latitude": 35.51981753431846,
+                "description": null,
+                "ps_remarks": {},
+                "ps_fault_status": 3,
+                "ps_type_name": "户用储能",
+                "build_status": 2,
+                "install_date": "2022-04-04 10:07:41",
+                "ps_consumption_power_price_kwh": null,
+                "ps_type": 5,
+                "email": null,
+                "longitude": 114.05490183311458,
+                "param_income_unit_name": "元",
+                "ps_name": "李光春",
+                "online_status": 1,
+                "ps_location": "河南省新乡市卫辉市安都乡秦安都村",
+                "ps_consumption_power_price_wh": null,
+                "ps_current_time_zone": "GMT+8",
+                "user_moble_tel": null,
+                "power_price_unit": "元",
+                "ps_id": 473465,
+                "ps_feedin_power_price_wh": "0.0003779",
+                "communication_dev_detail_list": [
+                    {
+                        "is_enable": 1,
+                        "sn": "B2230771763"
+                    }
+                ],
+                "connect_type": 1,
+                "fault_count": 0,
+                "install_power": 27250,
+                "design_capacity_pcs": 200,
+                "design_capacity_battery":1000
+            },
+            {
+                "alarm_count": 0,
+                "ps_key": "476178_11_0_0",
+                "ps_feedin_power_price_kwh": "0.3779",
+                "latitude": 35.46230785081807,
+                "description": null,
+                "ps_remarks": {},
+                "ps_fault_status": 3,
+                "ps_type_name": "户用储能",
+                "build_status": 2,
+                "install_date": "2022-04-11 17:44:02",
+                "ps_consumption_power_price_kwh": null,
+                "ps_type": 5,
+                "email": null,
+                "longitude": 114.19238753599508,
+                "param_income_unit_name": "元",
+                "ps_name": "张福功",
+                "online_status": 1,
+                "ps_location": "河南省新乡市卫辉市上乐村镇赵村",
+                "ps_consumption_power_price_wh": null,
+                "ps_current_time_zone": "GMT+8",
+                "user_moble_tel": null,
+                "power_price_unit": "元",
+                "ps_id": 476178,
+                "ps_feedin_power_price_wh": "0.0003779",
+                "communication_dev_detail_list": [
+                    {
+                        "is_enable": 1,
+                        "sn": "B2230771718"
+                    }
+                ],
+                "connect_type": 1,
+                "fault_count": 0,
+                "install_power": 29430,
+                "design_capacity_pcs": 200,
+                "design_capacity_battery":1000
+            }
+        ],
+        "code": "1",
+        "not_authorization_ps_list": []
+    }
+}
+
+2.2 Failure example
+{
+    "result_msg": "er_token_login_invalid",
+    "result_data": null,
+    "result_code": "E00003"
+}
+2.3 Error code
+Error code
+Description
+1
+Successful
+0
+Query failed. The interface is abnormal.
+4
+ps_ids in the input parameters is empty. No plants found through SNS.
+5
+Plant quantity of the query or sns exceeded the max. limit.
+6
+No plant information based on ps_ids is found.
+7
+All plants in ps_ids are not authorized.
