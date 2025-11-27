@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { getSungrowToken } from '../../sungrow/actions';
 
 function SungrowAuthCallback() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
-  const [tokenData, setTokenData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [rawError, setRawError] = useState<string | null>(null);
+  const [message, setMessage] = useState('Processing authentication...');
 
   useEffect(() => {
     if (code) {
@@ -19,11 +20,15 @@ function SungrowAuthCallback() {
           console.log('[CLIENT] Requesting token from server...');
           const data = await getSungrowToken(code);
           console.log('[CLIENT] Token data received:', data);
-          setTokenData(data);
+          if (data.success) {
+            setMessage('Authentication successful! Redirecting to your dashboard...');
+            router.push('/sungrow/dashboard');
+          } else {
+            setError(data.error || 'An unknown error occurred.');
+          }
         } catch (err: any) {
           console.error('[CLIENT] Error fetching token:', err);
           setError(err.message || 'An unknown error occurred.');
-          // Check if the detailed response body is attached to the error
           if (err.responseBody) {
             setRawError(err.responseBody);
           }
@@ -31,23 +36,14 @@ function SungrowAuthCallback() {
       };
       fetchToken();
     }
-  }, [code]);
+  }, [code, router]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-2xl bg-gray-800 rounded-lg shadow-xl p-8">
         <h1 className="text-3xl font-bold mb-6 text-center text-green-400">Sungrow Auth Callback</h1>
-        {code && !error && !tokenData && (
-          <p className="text-center text-lg">Exchanging authorization code for token...</p>
-        )}
-        {tokenData && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-center text-green-300">Authentication Successful!</h2>
-            <p className="text-center">Received token data:</p>
-            <pre className="bg-gray-700 p-4 rounded-md text-sm overflow-x-auto">{
-              JSON.stringify(tokenData, null, 2)
-            }</pre>
-          </div>
+        {code && !error && (
+          <p className="text-center text-lg">{message}</p>
         )}
         {error && (
           <div className="space-y-4">
