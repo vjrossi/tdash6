@@ -1,17 +1,17 @@
 'use server';
 
-import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_REDIRECT_URL } from '@/lib/sungrow-config';
+import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_REDIRECT_URL, SUNGROW_TOKEN_URL } from '@/lib/sungrow-config';
 
 export async function getSungrowToken(code: string) {
   try {
-    const response = await fetch('https://auweb3.isolarcloud.com/openapi/apiManage/token', {
+    const response = await fetch(SUNGROW_TOKEN_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-access-key': SUNGROW_SECRET_KEY,
       },
       body: JSON.stringify({
         appkey: SUNGROW_APP_KEY,
-        appsecret: SUNGROW_SECRET_KEY,
         grant_type: 'authorization_code',
         code: code,
         redirect_uri: SUNGROW_REDIRECT_URL,
@@ -22,10 +22,12 @@ export async function getSungrowToken(code: string) {
 
     if (!response.ok || data.result_code !== '1') {
       const errorMessage = data.result_msg || 'An unknown API error occurred.';
-      console.error('Sungrow API Error:', errorMessage);
+      console.error('Sungrow API Error:', errorMessage, data);
       return { success: false, error: errorMessage };
     }
 
+    // TODO: Store the token securely
+    // For now, just returning it to the client for verification
     return { success: true, data: data.result_data };
 
   } catch (error) {

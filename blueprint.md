@@ -20,6 +20,7 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
     3.  After approving the request, they are redirected back to the application at `/auth/sungrow`.
     4.  A server action (`getSungrowToken`) automatically exchanges the received authorization `code` for an access token.
     5.  The access token data is then displayed on the page for verification.
+*   **Token Exchange:** A server action now correctly handles exchanging the authorization code for an access token by sending the secret key in the `x-access-key` header, as per the Sungrow documentation.
 *   **Configuration:** All API keys and redirect URLs are managed securely via environment variables, compatible with Vercel's production environment. This follows the same secure pattern as the Tesla integration.
 *   **Error Handling:** Robust error handling is implemented on both the server action (providing clear logs) and the client-side callback page (displaying user-friendly error messages).
 *   **Status:** **Completed**
@@ -29,12 +30,11 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
 *   **Framework:** Uses Tailwind CSS for a clean, modern, and beautiful dark-mode design.
 *   **Aesthetics:** UI components are polished with icons, balanced layouts, and clear typography.
 
-## Current Plan: Deployment
+## Current Plan: Sungrow API Token Exchange
 
-*   **Objective:** Commit and push all recent changes to the repository.
-*   **Status:** In Progress
+*   **Objective:** Correctly implement the token exchange logic for the Sungrow API.
+*   **Status:** Completed
 *   **Steps:**
-    1.  Update `blueprint.md` to reflect the completed Sungrow integration.
-    2.  Stage all new and modified files for commit.
-    3.  Create a commit with a descriptive message.
-    4.  Push the commit to the remote repository.
+    1.  Added the `SUNGROW_TOKEN_URL` to the `lib/sungrow-config.ts` file.
+    2.  Updated the `getSungrowToken` server action in `app/sungrow/actions.ts` to send the `x-access-key` in the header, as required by the Sungrow API documentation.
+    3.  Updated `blueprint.md` to reflect the corrected implementation.
