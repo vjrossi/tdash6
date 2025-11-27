@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getSungrowToken } from './actions';
+import { getSungrowToken } from '../../sungrow/actions';
 
 function SungrowAuthCallback() {
   const searchParams = useSearchParams();
