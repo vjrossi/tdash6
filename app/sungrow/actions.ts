@@ -1,80 +1,45 @@
 'use server';
 
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_TOKEN_URL, SUNGROW_REDIRECT_URL } from '@/lib/sungrow-config';
 
-// export async function getSungrowToken(code: string) {
-//   if (!SUNGROW_APP_KEY || !SUNGROW_SECRET_KEY) {
-//     const errorMessage = 'Server configuration error: The Sungrow App Key or Secret is not set on the server. Please ensure environment variables are configured correctly.';
-//     console.error(`[ERROR] getSungrowToken: ${errorMessage}`);
-//     throw new Error(errorMessage);
-//   }
+// --- AUTHENTICATION ACTIONS ---
 
-//   console.log('--- Initiating Sungrow Token Exchange ---');
-//   try {
-//     const requestBody = {
-//       grant_type: 'authorization_code',
-//       appkey: SUNGROW_APP_KEY,
-//       code: code,
-//       redirect_uri: SUNGROW_REDIRECT_URL,
-//     };
+export async function getTokens() {
+    const accessToken = (await cookies()).get('sungrow_access_token')?.value;
+    const refreshToken = (await cookies()).get('sungrow_refresh_token')?.value;
+    return { accessToken, refreshToken };
+}
 
-//     const requestHeaders = {
-//         'Content-Type': 'application/json',
-//         'x-access-key': SUNGROW_SECRET_KEY,
-//       }
+export async function getSungrowPsList() {
+    const psListCookie = (await cookies()).get('sungrow_ps_list')?.value;
+    if (!psListCookie) return [];
+    try {
+        return JSON.parse(psListCookie);
+    } catch (e) {
+        console.error('Error parsing ps_list cookie:', e);
+        return [];
+    }
+}
 
-//     console.log('[REQUEST] Sungrow Token Request Body:', JSON.stringify(requestBody, null, 2));
-//     console.log('[REQUEST] Sungrow Token Request Headers:', JSON.stringify(requestHeaders, null, 2));
+export async function logout() {
+    (await cookies()).delete('sungrow_access_token');
+    (await cookies()).delete('sungrow_refresh_token');
+    (await cookies()).delete('sungrow_ps_list');
+    redirect('/');
+}
 
-//     const response = await fetch(SUNGROW_TOKEN_URL, {
-//       method: 'POST',
-//       headers: requestHeaders,
-//       body: JSON.stringify(requestBody),
-//     });
-
-//     const responseBody = await response.text();
-//     console.log('[RESPONSE] Sungrow Token Response Status:', response.status);
-//     console.log('[RESPONSE] Sungrow Token Response Body:', responseBody);
-
-//     if (!response.ok) {
-//       const error = new Error(`Sungrow API request failed with status ${response.status}. See server logs for full response body.`);
-//       (error as any).responseBody = responseBody;
-//       throw error;
-//     }
-
-//     const data = JSON.parse(responseBody);
-
-//     if (data.result_code !== '1') {
-//       throw new Error(`Sungrow API returned an error: ${data.result_msg}`);
-//     }
-
-//     console.log('--- Sungrow Token Exchange Successful ---');
-//     return data.result_data;
-
-//   } catch (error) {
-//     console.error('[ERROR] in getSungrowToken:', error);
-//     console.log('--- Sungrow Token Exchange Failed ---');
-//     throw error;
-//   }
-// }
-
-export async function getSungrowToken(code: string) {
+export async function getSungrowToken(code: string): Promise<{ success: boolean; error?: string }> {
   if (!SUNGROW_APP_KEY || !SUNGROW_SECRET_KEY || !SUNGROW_REDIRECT_URL || !SUNGROW_TOKEN_URL) {
-    const errorMessage =
-      'Server configuration error: Sungrow env vars missing (APP_KEY / SECRET / REDIRECT / TOKEN_URL).';
-    console.error('[SUNGROW] ' + errorMessage, {
-      hasAppKey: !!SUNGROW_APP_KEY,
-      hasSecret: !!SUNGROW_SECRET_KEY,
-      hasRedirect: !!SUNGROW_REDIRECT_URL,
-      hasTokenUrl: !!SUNGROW_TOKEN_URL,
-    });
-    throw new Error(errorMessage);
+    const errorMessage = 'Server configuration error: Sungrow env vars missing.';
+    return { success: false, error: errorMessage };
   }
 
   const requestBody = {
     grant_type: 'authorization_code',
     appkey: SUNGROW_APP_KEY,
-    code, // <- dynamic!
+    code,
     redirect_uri: SUNGROW_REDIRECT_URL,
   };
 
@@ -84,13 +49,6 @@ export async function getSungrowToken(code: string) {
     Accept: '*/*',
   };
 
-  console.log('[SUNGROW] URL:', SUNGROW_TOKEN_URL);
-  console.log('[SUNGROW] BODY:', JSON.stringify(requestBody, null, 2));
-  console.log('[SUNGROW] HEADERS (masked):', {
-    ...requestHeaders,
-    'x-access-key': '***' + SUNGROW_SECRET_KEY.slice(-4),
-  });
-
   try {
     const response = await fetch(SUNGROW_TOKEN_URL, {
       method: 'POST',
@@ -99,30 +57,31 @@ export async function getSungrowToken(code: string) {
     });
 
     const responseText = await response.text();
-    console.log('[SUNGROW] STATUS:', response.status);
-    console.log('[SUNGROW] RAW RESPONSE:', responseText);
 
     if (!response.ok) {
-      const err: any = new Error(`Sungrow API failed with HTTP ${response.status}`);
-      err.responseBody = responseText;
-      throw err;
+      return { success: false, error: `Sungrow API failed with HTTP ${response.status}` };
     }
 
-    let data: any;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      console.error('[SUNGROW] JSON parse error:', e);
-      throw new Error('Failed to parse Sungrow response as JSON');
-    }
+    const data = JSON.parse(responseText);
 
     if (data.result_code !== '1') {
-      throw new Error(`Sungrow API error: ${data.result_msg || data.result_code}`);
+      return { success: false, error: `Sungrow API error: ${data.result_msg || data.result_code}` };
     }
 
-    return data.result_data;
+    const { access_token, refresh_token, expires_in, auth_ps_list } = data.result_data;
+    
+    const secure = process.env.NODE_ENV === 'production';
+    const cookieOptions = { httpOnly: true, secure, path: '/' };
+
+    const cookieStore = await cookies();
+    cookieStore.set('sungrow_access_token', access_token, { ...cookieOptions, maxAge: expires_in });
+    cookieStore.set('sungrow_refresh_token', refresh_token, { ...cookieOptions });
+    cookieStore.set('sungrow_ps_list', JSON.stringify(auth_ps_list), { ...cookieOptions });
+
+    return { success: true };
+
   } catch (error) {
-    console.error('[SUNGROW] getSungrowToken error:', error);
-    throw error;
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, error: errorMessage };
   }
 }

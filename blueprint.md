@@ -4,10 +4,13 @@
 
 This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API to provide users with a comprehensive, real-time dashboard of their vehicles and solar energy systems.
 
-## Environment Variable Logging
+## Build Error Resolution
 
-*   **Objective:** To debug issues with environment variables in the production environment, logging has been added to the `sungrow-config.ts` file.
-*   **Mechanism:** As each Sungrow-related environment variable is read, its value is logged to the console. This provides a direct and simple way to inspect the values that the application is receiving from the Vercel environment.
+*   **Objective:** Resolve persistent build errors that were preventing successful deployment.
+*   **Root Cause:** The primary issue was improper handling of the `cookies()` function from `next/headers` in Server Actions, leading to TypeScript type errors. A secondary issue was a missing null check for a URL search parameter.
+*   **Solution:**
+    *   **Cookie Handling:** Refactored `app/sungrow/actions.ts` to consistently use `(await cookies())` for all cookie interactions, mirroring the working implementation in `app/actions.ts`. This ensures that the `cookies` object is correctly resolved before being used.
+    *   **Null Check:** Added a validation check in `app/sungrow/callback/page.tsx` to ensure the `code` URL parameter is present before attempting to use it, preventing a type error.
 *   **Status:** **Completed**
 
 ## Tesla Integration
@@ -37,11 +40,3 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
 *   **Framework:** Uses Tailwind CSS for a clean, modern, and beautiful dark-mode design.
 *   **Aesthetics:** UI components are polished with icons, balanced layouts, and clear typography.
 
-## Current Plan: Implement Environment Variable Logging
-
-*   **Objective:** Add console logging to `sungrow-config.ts` to display the values of environment variables as they are read by the application.
-*   **Status:** Completed
-*   **Steps:**
-    1.  Updated `lib/sungrow-config.ts` to log the values of all Sungrow-related environment variables.
-    2.  Updated `blueprint.md` to reflect the new logging strategy.
-    3.  Build and push the changes for redeployment.
