@@ -51,7 +51,7 @@ access_token
 result_data.refresh_token
 String
 c7db59ec-5bb5-49ea-841e-XXXX02f90aa4
-refresh_token
+refresh_token 
 result_data.expires_in
 String
 3450872
