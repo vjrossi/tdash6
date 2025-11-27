@@ -89,7 +89,8 @@ export async function getVehicles() {
     }
 
     try {
-        const response = await fetch(`${baseUrl}/api/1/vehicles`, {
+        const response = await fetch(`${baseUrl}/api/1/vehicles`,
+        {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -140,12 +141,9 @@ export async function getVehicleData(vehicleId: string) {
 
         const vehicle = (await initialResponse.json()).response;
 
-        // If the vehicle is asleep, wake it up
+        // If the vehicle is not online, return its state instead of trying to wake it
         if (vehicle.state !== 'online') {
-            const wakeUpResult = await wakeUpVehicle(vehicleId, accessToken);
-            if (!wakeUpResult.success) {
-                return { success: false, error: "Vehicle is offline and could not be woken up." };
-            }
+            return { success: false, error: `Vehicle is ${vehicle.state}` };
         }
 
         // Now that the vehicle is awake, fetch the full data combo
@@ -171,46 +169,3 @@ export async function getVehicleData(vehicleId: string) {
         return { success: false, error: `Failed to fetch vehicle data. Reason: ${errorMessage}` };
     }
 }
-
-export async function wakeUpVehicle(vehicleId: string, accessToken: string) {
-    const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
-    if (!baseUrl) {
-        return { success: false, error: "API base URL is not configured." };
-    }
-
-    try {
-        // Initial wake up call
-        await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}/wake_up`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-        });
-
-        const startTime = Date.now();
-        const timeout = 30000; // 30 seconds
-        let vehicleState = null;
-
-        while (Date.now() - startTime < timeout) {
-            const res = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}`, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                },
-            });
-            const vehicle = (await res.json()).response;
-            vehicleState = vehicle.state;
-            if (vehicleState === 'online') {
-                revalidatePath('/dashboard');
-                return { success: true };
-            }
-            await delay(2000); // Wait 2 seconds before checking again
-        }
-        
-        console.error('Wake up timed out for vehicle:', vehicleId);
-        return { success: false, error: "Wake up timed out. The vehicle did not respond."};
-
-    } catch (error) {
-        console.error("Wake up error:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return { success: false, error: `Failed to wake up vehicle. Reason: ${errorMessage}` };
-    }
-}
-

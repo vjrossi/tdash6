@@ -3,7 +3,7 @@
 import { Vehicle } from '@/lib/types';
 import {
     BatteryCharging, Thermometer, ShieldCheck,
-    MapPin, Gauge, Fan, Snowflake, Sun, ParkingCircle, RefreshCw
+    MapPin, Gauge, Fan, Snowflake, Sun, ParkingCircle, RefreshCw, PowerOff
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -88,14 +88,25 @@ export function VehicleCard({ vehicle, onRefresh }: VehicleCardProps) {
             setIsRefreshing(false);
         }
     };
-    // Error state
+    
+    // Offline/Asleep State
     if (vehicle.error || !vehicle.vehicle_data) {
         return (
-            <div className="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col justify-center items-center text-center">
-                <h3 className="text-xl font-bold text-cyan-400">{vehicle.display_name}</h3>
-                <p className="text-gray-400 text-sm mb-4">{vehicle.vin}</p>
-                <p className="text-red-500">Could not load vehicle data.</p>
-                <p className="text-gray-500 text-sm">{vehicle.error}</p>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-cyan-500/20">
+                <div className="p-6 bg-gradient-to-br from-gray-900 to-gray-800/50 flex justify-between items-start">
+                    <div>
+                        <h3 className="text-2xl font-bold text-cyan-400">{vehicle.display_name}</h3>
+                        <p className="text-gray-400 text-sm">{vehicle.vin}</p>
+                    </div>
+                    <button onClick={handleRefresh} disabled={isRefreshing} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
+                <div className="p-12 flex flex-col justify-center items-center text-center">
+                    <PowerOff className="h-16 w-16 text-gray-500 mb-4" />
+                    <p className="text-xl font-semibold text-white">Vehicle Offline</p>
+                    <p className="text-gray-400">{vehicle.error || "Could not connect to the vehicle."}</p>
+                </div>
             </div>
         );
     }
