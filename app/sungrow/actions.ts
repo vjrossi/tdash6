@@ -1,3 +1,4 @@
+
 'use server';
 
 import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_TOKEN_URL, SUNGROW_REDIRECT_URL } from '@/lib/sungrow-config';
@@ -11,7 +12,6 @@ export async function getSungrowToken(code: string) {
 
   console.log('--- Initiating Sungrow Token Exchange ---');
   try {
-    // Per Sungrow's test portal, the appkey belongs in the request body.
     const requestBody = {
       grant_type: 'authorization_code',
       appkey: SUNGROW_APP_KEY,
@@ -25,7 +25,9 @@ export async function getSungrowToken(code: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-access-key': SUNGROW_SECRET_KEY, // Secret key remains in headers
+        'x-access-key': SUNGROW_SECRET_KEY,
+        // Add a standard browser User-Agent to bypass CloudFront restrictions
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
       },
       body: JSON.stringify(requestBody),
     });
