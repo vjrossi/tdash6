@@ -1,0 +1,208 @@
+Quick Start
+Welcome to the Sungrow Developer Portal. As a developer and installer, you can use the portal to access the iSolarCloud plant owner's data. This Quick Start will guide you through creating an application, obtaining the plant owner's authorization, and calling the APIs.
+
+Step 1: Register a Developer Portal Account
+To start using the API, you must to register a developer account. Visit the developer portal and provide the required information to register. You can also log in with your iSolarCloud account.
+
+Step 2: Create an application
+After registration is completed, log in to the developer portal and create a new application. When you create an application, you need to fill in the application name and company information.
+
+If you use the OAuth 2.0 authorization process, you need to fill in the Redirect URL (The Redirect URL is used in the OAuth 2.0 authorization process. After obtaining authorization from the iSolarCloud plant owner, it will jump to the address specified by redirect_url, and carry the authorization code in the URL). 
+
+When you create an application, you will receive a unique Appkey and Secret_Key which are used to access the API interface later. 
+
+Step 3: Introduction of Authorization Process
+Currently, the Sungrow API has two authorization methods: 
+
+API Key: If your iSolarCloud account has a directly owned or shared plant (API V1), you can directly access the plant data. This scenario is suited for most installers.
+OAuth 2.0: If you do not have iSolarCloud plant access permissions, you must obtain the iSolarCloud plant owner's authorization through OAuth 2.0 before you can access plant data. This method is used for third-party monitoring platforms, VPP, and other scenarios.
+Note: The previous version of API V1 does not support OAuth 2.0 Authorization. If you need to use OAuth 2.0, you need to migrate to the V2 interface. 
+
+Introduction to the OAuth 2.0 Authorization Process:
+Open Authorization 2.0 (OAuth 2.0) is an open standard auth protocol that allows users to authorize third-party applications to access privately stored resources without providing the application with their username or password. OAuth 2.0 implements access control to resources by providing a token instead of a username and password, thereby enhancing the security of user data.
+
+The overall authorization process is:
+The plant owner accesses the authorization request function integrated by the third-party application. iSolar Cloud presents the login page and the authorization page to the plant owner to log in and authorize the third-party application. After the plant owner authorizes, the third-party application can obtain the authorization code of the owner through the Redirect URL, Access the OAuth service of the developer platform through the authorization code in exchange for Access Token and Refresh Token, and further access the API interface through the Access Token. See the following figure for the specific process.
+
+
+
+Note:
+
+Make sure you keep your Secret_Key secure to avoid data leaks.
+Access tokens have a validity period. Use Refresh Token to refresh tokens on expiry.
+Make sure that Refresh Token is refreshed before Refresh Token expires. New Access Token and Refresh Token are returned when Refresh Token is refreshed. Old Access Token and Refresh Tokenare invalid. If Refresh Token expires, you need to go through the full authorization process in step 3 again.
+Access Token is valid for 2 days, Refresh Token is valid for 30 days.
+The authorization code remains valid for 30 minutes. You must obtain the token within this time period. Once the authorization code expires, you'll need to reinitiate the authorization process to get a new one.
+OAuth 2.0 authorization process
+OAuth 2.0 is an industry-standard protocol for authorizing users to access APIs. Here is the brief introduction to the authorization steps.
+
+Request Authorization
+If you select use OAuth 2.0 authorization in creating an application, you can view the authorization URL on the application details page after the application is made. Third-party applications can usually integrate this link, or they can directly copy this link and send it to the plant owner.
+
+
+
+After the plant owner initiates an authorization request from the third-party application, the plant owner will access the OAuth service, and the authorization request address is the Authorization URL above with your application ID and Redirect URL. Example request: 
+
+GET /authorized-app?cloudId=YOUR_ACCOUNT_BELONG_TO_CLOUD&applicationId=YOUR_APPLICATION_ID&redirectUrl=YOUR_REDIRECT_URI
+Plant Owner Authorization
+After the user logs in and agrees to authorize, an Authorization Code will be generated. The page will be redirected to the Redirect URL, and the Authorization Code will be spliced after the Redirect URL.
+
+
+
+
+
+Exchange Access Token through Authorization Code
+Use the obtained authorization_code to request an access token from the Oauth Service. Example Request:
+
+POST /openapi/apiManage/token
+
+Content-Type: application/json
+x-access-key: your Secret Key
+
+{
+    "appkey":"your appkey",
+    "grant_type":"authorization_code",
+    "code":"authorization code",
+    "redirect_uri":"your redirect url"
+}
+💡 Note: Authorization code can only be used once. Please make sure Appkey, redirect_uri parameter and request header x-access-key are correct. Otherwise re-authorization is required.
+
+After the auth server validates the request, it returns an access token that can be used to access API resources. Example Return:
+
+{
+  "req_serial_num": "202409238d774af79943848e43f64876",
+  "result_code": "1",
+  "result_msg": "success",
+  "result_data": {
+    "access_token": "84a25a35-efa4-42b6-b573-9144ae5b923d",
+    "token_type": "bearer",
+    "refresh_token": "d545a0ab-ff3b-4d1f-b3ef-524fd6f60c6b",
+    "expires_in": 172799,
+    "auth_ps_list": [
+      "1122348203"
+    ],
+    "auth_user": 65199
+  }
+}
+Call API With Token
+The developer can request the plant data of an authorized iSolarCloud end user by calling the relevant endpoints of the Developer portal. When making an endpoint request, add the authorization obtained in the previous step in the HTTP request body. The value is: "Bearer "+ access_token.
+
+Refresh a Token
+The valid period of an access_token is fairly short (2 days). When an access_token expires, you can use refresh_token to refresh it.
+
+Example Request:
+
+POST /openapi/apiManage/refreshToken
+
+Content-Type: application/json
+x-access-key: your Secret Key
+
+{
+    "refresh_token":"f659b573-8c89-4bbb-9ec4-d2d601cb9733",
+    "appkey":"074C20C520E3EF193A52D5392FB7C81F"
+}
+Example Response:
+
+{
+  "req_serial_num": "20240923eb9c43218b70129d3284ccaa",
+  "result_code": "1",
+  "result_msg": "success",
+  "result_data": {
+    "access_token": "3b1274dd-a944-4c8e-ae09-bc89c20c9242",
+    "refresh_token": "a05246f8-e0e5-4be9-a8a5-e9190bcea061",
+    "code": "1",
+    "token_type": "bearer",
+    "expires_in": 172799
+  }
+}
+Revoke Authorization
+The end user of the iSolarCloud plant can revoke authorization through the iSolarCloud web or app under Account and Security > Authorization Management. The Authorization Management page displays a list of authorized applications. Click the Authorization Details button to enter the corresponding page: Users can revoke authorization from the Authorization Details page. This is the end of the developer portal user guide. For more information, refer to the developer documentation.
+
+Account Login Authorization Process Introduction
+If you already have an iSolar Cloud account and can view these power stations on iSolar Cloud, you can directly use this account to obtain a token through the login interface for identity authentication to access other interfaces. 
+
+Obtain a Token through The Login Interface
+Before calling the interface, you need to call /openapi/login interface to get the token:
+Return example:
+
+POST /openapi/login
+
+Content-Type: application/json
+x-access-key: your application's Secret Key
+sys_code: 901
+
+{
+    "appkey": "your appkey",
+    "user_account": "your account",
+    "user_password":"your account password"   
+}
+Return example:
+
+{
+  "req_serial_num": "202411114fa4436f9bc807bc966920ec",
+  "result_code": "1",
+  "result_msg": "success",
+  "result_data": {
+    "user_master_org_id": "89899046",
+    "mobile_tel": "153****5",
+    "user_name": "test user1",
+    "language": "Chinese",
+    "token": "999125867_91bbb35be9f74ccebb0406307ca80874",
+    "err_times": "0",
+    "user_id": "1",
+    "login_state": "1",
+    "disable_time": null,
+    "country_name": "China",
+    "user_account": "test user1",
+    "user_master_org_name": "org-ty1867erni",
+    "email": "",
+    "country_id": "1"
+  }
+}
+Call the API Interface through Token
+Then you can take /openapi/login the token returned by the interface calls the interface of the open platform:
+
+POST/openapi/getPowerStationList
+
+Content-Type: application/json
+x-access-key: your application's Secret Key
+sys_code: 901
+
+{
+    "appkey":"your appkey",
+    "token":"token",
+    "curPage":1,
+    "size":10
+}
+Return example:
+
+{
+  "req_serial_num":"202411124b514f528da409106b0bec7b",
+  "result_code":"1",
+  "result_msg":"success",
+  "result_data":{
+    "pageList":[
+      {
+        "ps_name":"MN20220720A",
+        "online_status":0,
+        "latitude":31.86406773478788,
+        "description":null,
+        "valid_flag":1,
+        "grid_connection_status":1,
+        "ps_fault_status":3,
+        "ps_location":"H2O UNITY Coffee",
+        "update_time":"2024-09-02 17:20:37",
+        "ps_current_time_zone":"GMT-2",
+        "ps_id":342459181,
+        "grid_connection_time":20230808152800,
+        "connect_type":1,
+        "install_date":"2023-08-08 15:27:58",
+        "build_status":2,
+        "ps_type":4,
+        "longitude":117.27770144878463
+      }
+    ],
+    "rowCount":1
+  }
+}
+The above is all the content of the quick start. For more information, refer to the developer documentation.
