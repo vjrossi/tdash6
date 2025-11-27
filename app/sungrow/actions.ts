@@ -3,6 +3,13 @@
 import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_TOKEN_URL, SUNGROW_REDIRECT_URL } from '@/lib/sungrow-config';
 
 export async function getSungrowToken(code: string) {
+  // Fail-fast check for server-side environment variables
+  if (!SUNGROW_APP_KEY || !SUNGROW_SECRET_KEY) {
+    const errorMessage = 'Server configuration error: The Sungrow App Key or Secret is not set on the server. Please ensure environment variables are configured correctly.';
+    console.error(`[ERROR] getSungrowToken: ${errorMessage}`);
+    throw new Error(errorMessage);
+  }
+
   console.log('--- Initiating Sungrow Token Exchange ---');
   try {
     const requestBody = {
@@ -29,7 +36,6 @@ export async function getSungrowToken(code: string) {
 
     if (!response.ok) {
       const error = new Error(`Sungrow API request failed with status ${response.status}. See server logs for full response body.`);
-      // Attach the response body for richer client-side error display
       (error as any).responseBody = responseBody;
       throw error;
     }
@@ -45,7 +51,6 @@ export async function getSungrowToken(code: string) {
   } catch (error) {
     console.error('[ERROR] in getSungrowToken:', error);
     console.log('--- Sungrow Token Exchange Failed ---');
-    // Re-throw the error to be caught by the client
     throw error;
   }
 }
