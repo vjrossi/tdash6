@@ -1,4 +1,3 @@
-
 'use server';
 
 import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_TOKEN_URL, SUNGROW_REDIRECT_URL } from '@/lib/sungrow-config';
@@ -19,16 +18,17 @@ export async function getSungrowToken(code: string) {
       redirect_uri: SUNGROW_REDIRECT_URL,
     };
 
+    const requestHeaders = {
+        'Content-Type': 'application/json',
+        'x-access-key': SUNGROW_SECRET_KEY,
+      }
+
     console.log('[REQUEST] Sungrow Token Request Body:', JSON.stringify(requestBody, null, 2));
+    console.log('[REQUEST] Sungrow Token Request Headers:', JSON.stringify(requestHeaders, null, 2));
 
     const response = await fetch(SUNGROW_TOKEN_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-access-key': SUNGROW_SECRET_KEY,
-        // Add a standard browser User-Agent to bypass CloudFront restrictions
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-      },
+      headers: requestHeaders,
       body: JSON.stringify(requestBody),
     });
 
