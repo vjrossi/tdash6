@@ -12,9 +12,9 @@ export async function getSungrowToken(code: string) {
 
   console.log('--- Initiating Sungrow Token Exchange ---');
   try {
+    // The appkey is sent as a header, not in the body, per successful manual testing.
     const requestBody = {
       grant_type: 'authorization_code',
-      appkey: SUNGROW_APP_KEY,
       code: code,
       redirect_uri: SUNGROW_REDIRECT_URL,
     };
@@ -25,7 +25,8 @@ export async function getSungrowToken(code: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-access-key': SUNGROW_SECRET_KEY,
+        'x-access-key': SUNGROW_SECRET_KEY, // Secret key
+        'x-app-key': SUNGROW_APP_KEY,      // App key
       },
       body: JSON.stringify(requestBody),
     });
@@ -42,12 +43,18 @@ export async function getSungrowToken(code: string) {
 
     const data = JSON.parse(responseBody);
 
-    if (data.result_code !== '1') {
-      throw new Error(`Sungrow API returned an error: ${data.result_msg}`);
+    // The successful response does not have a top-level 'result_code'. 
+    // It directly contains token data.
+    if (response.status === 200 && data.access_token) {
+        console.log('--- Sungrow Token Exchange Successful ---');
+        // The actual token data is nested inside the 'result_data' object in the successful response.
+        return data.result_data;
+    } else {
+        // Handle cases where the response is OK but doesn't contain the token, or other errors.
+        const errorMessage = data.result_msg || 'An unknown error occurred during token exchange.';
+        throw new Error(`Sungrow API returned an error: ${errorMessage}`);
     }
 
-    console.log('--- Sungrow Token Exchange Successful ---');
-    return data.result_data;
   } catch (error) {
     console.error('[ERROR] in getSungrowToken:', error);
     console.log('--- Sungrow Token Exchange Failed ---');
