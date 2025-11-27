@@ -145,6 +145,7 @@ export async function getSungrowPlantDetails(): Promise<SungrowPlantBasicInfo[]>
   if (!psIds.length) return [];
 
   const requestBody = {
+    appkey: SUNGROW_APP_KEY,
     ps_ids: psIds.join(','),
     sns: '',
     lang: '',
