@@ -13,11 +13,11 @@ export default function SungrowAuthClientPage() {
   useEffect(() => {
     if (code) {
       getSungrowToken(code)
-        .then(data => {
-          if (data.error) {
-            setError(data.error);
+        .then(response => {
+          if (response.success) {
+            setTokenData(response.data);
           } else {
-            setTokenData(data);
+            setError(response.error || 'An unknown error occurred.');
           }
         })
         .catch(err => {
