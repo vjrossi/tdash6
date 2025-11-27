@@ -10,4 +10,5 @@ console.log('NEXT_PUBLIC_SUNGROW_REDIRECT_URL:', SUNGROW_REDIRECT_URL);
 export const SUNGROW_RSA_PUBLIC_KEY = process.env.SUNGROW_RSA_PUBLIC_KEY || '';
 console.log('SUNGROW_RSA_PUBLIC_KEY:', SUNGROW_RSA_PUBLIC_KEY);
 
-export const SUNGROW_TOKEN_URL = 'https://augateway.isolarcloud.com/openapi/apiManage/token';
+export const SUNGROW_BASE_URL = 'https://augateway.isolarcloud.com/';
+export const SUNGROW_ENDPOINT_TOKEN = 'openapi/apiManage/token';

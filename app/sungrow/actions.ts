@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_TOKEN_URL, SUNGROW_REDIRECT_URL } from '@/lib/sungrow-config';
+import { SUNGROW_APP_KEY, SUNGROW_SECRET_KEY, SUNGROW_BASE_URL, SUNGROW_ENDPOINT_TOKEN, SUNGROW_REDIRECT_URL } from '@/lib/sungrow-config';
 
 // --- AUTHENTICATION ACTIONS ---
 
@@ -31,7 +31,7 @@ export async function logout() {
 }
 
 export async function getSungrowToken(code: string): Promise<{ success: boolean; error?: string }> {
-  if (!SUNGROW_APP_KEY || !SUNGROW_SECRET_KEY || !SUNGROW_REDIRECT_URL || !SUNGROW_TOKEN_URL) {
+  if (!SUNGROW_APP_KEY || !SUNGROW_SECRET_KEY || !SUNGROW_REDIRECT_URL || !SUNGROW_ENDPOINT_TOKEN || !SUNGROW_BASE_URL) {
     const errorMessage = 'Server configuration error: Sungrow env vars missing.';
     return { success: false, error: errorMessage };
   }
@@ -50,7 +50,7 @@ export async function getSungrowToken(code: string): Promise<{ success: boolean;
   };
 
   try {
-    const response = await fetch(SUNGROW_TOKEN_URL, {
+    const response = await fetch(`${SUNGROW_BASE_URL}${SUNGROW_ENDPOINT_TOKEN}`, {
       method: 'POST',
       headers: requestHeaders,
       body: JSON.stringify(requestBody),
