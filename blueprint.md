@@ -1,4 +1,3 @@
-
 # Project Blueprint
 
 ## Overview
@@ -20,7 +19,7 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
     3.  After approving the request, they are redirected back to the application at `/auth/sungrow`.
     4.  A server action (`getSungrowToken`) automatically exchanges the received authorization `code` for an access token.
     5.  The access token data is then displayed on the page for verification.
-*   **Token Exchange:** A server action now correctly handles exchanging the authorization code for an access token by sending the secret key in the `x-access-key` header, as per the Sungrow documentation. The endpoint has been corrected to use the regional `auweb3.isolarcloud.com` URL.
+*   **Token Exchange:** A server action now correctly handles exchanging the authorization code for an access token by sending the secret key in the `x-access-key` header and including the `redirect_uri` in the request body, as per the Sungrow documentation. The endpoint is configured to use the regional `auweb3.isolarcloud.com` URL.
 *   **Configuration:** All API keys and redirect URLs are managed securely via environment variables, compatible with Vercel's production environment. This follows the same secure pattern as the Tesla integration.
 *   **Error Handling:** Robust error handling is implemented on both the server action (providing clear logs) and the client-side callback page (displaying user-friendly error messages).
 *   **Status:** **Completed**
@@ -30,11 +29,11 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
 *   **Framework:** Uses Tailwind CSS for a clean, modern, and beautiful dark-mode design.
 *   **Aesthetics:** UI components are polished with icons, balanced layouts, and clear typography.
 
-## Current Plan: Sungrow API Endpoint Fix
+## Current Plan: Sungrow API Token Exchange Fix
 
-*   **Objective:** Correct the Sungrow API endpoint to resolve the `fetch failed` error.
+*   **Objective:** Add the required `redirect_uri` to the Sungrow token exchange request.
 *   **Status:** Completed
 *   **Steps:**
-    1.  Updated the `SUNGROW_TOKEN_URL` in `lib/sungrow-config.ts` to `https://auweb3.isolarcloud.com/openapi/apiManage/token`.
-    2.  Updated `blueprint.md` to reflect the endpoint correction.
+    1.  Updated the `getSungrowToken` action in `app/sungrow/actions.ts` to include `redirect_uri` in the POST request body.
+    2.  Updated `blueprint.md` to reflect the change.
     3.  Commit and push changes for redeployment.
