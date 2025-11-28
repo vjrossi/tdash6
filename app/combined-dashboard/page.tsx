@@ -16,7 +16,9 @@ import {
   getTokens as getSungrowTokens,
   logout as sungrowLogout,
   getSungrowPlantDetails,
+  getSungrowRealtimeMetrics,
   type SungrowPlantBasicInfo,
+  type SungrowRealtimeMetrics,
 } from '@/app/sungrow/actions';
 
 import {
@@ -25,6 +27,8 @@ import {
   MapPin,
   Power,
   Clock,
+  Zap, // Added for live power
+  Sun, // Added for daily yield
 } from 'lucide-react';
 
 /* ---------- Tesla panel (reuses Tesla dashboard logic) ---------- */
@@ -91,10 +95,10 @@ function TeslaPanel() {
         currentVehicles.map((v) =>
           v.id_s === vehicleId
             ? {
-                ...v,
-                vehicle_data: dataResult.success ? dataResult.data : null,
-                error: !dataResult.success ? dataResult.error : null,
-              }
+              ...v,
+              vehicle_data: dataResult.success ? dataResult.data : null,
+              error: !dataResult.success ? dataResult.error : null,
+            }
             : v
         )
       );
@@ -169,6 +173,7 @@ function TeslaPanel() {
 function SungrowPanel() {
   const router = useRouter();
   const [plants, setPlants] = useState<SungrowPlantBasicInfo[]>([]);
+  const [metrics, setMetrics] = useState<SungrowRealtimeMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -183,11 +188,22 @@ function SungrowPanel() {
         }
 
         const details = await getSungrowPlantDetails();
-        if (!cancelled) {
-          setPlants(details);
+
+        if (details.length > 0) {
+          const primaryPsId = details[0].psId.toString();
+          // NEW: Fetch real-time data for the primary plant
+          const realtimeData = await getSungrowRealtimeMetrics(primaryPsId);
+
+          if (!cancelled) {
+            setPlants(details);
+            setMetrics(realtimeData);
+          }
+        } else if (!cancelled) {
+          setPlants([]);
+          setMetrics(null);
         }
       } catch (e) {
-        console.error('Failed to fetch Sungrow plant details', e);
+        console.error('Failed to fetch Sungrow data', e);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -241,6 +257,11 @@ function SungrowPanel() {
   const primary = plants[0];
   const others = plants.slice(1);
 
+  // Formatters
+  const livePowerKW = metrics?.livePowerW != null ? (metrics.livePowerW / 1000).toFixed(2) : null;
+  const dailyYieldKWH = metrics?.dailyYieldWh != null ? (metrics.dailyYieldWh / 1000).toFixed(2) : null;
+
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -277,28 +298,58 @@ function SungrowPanel() {
             </div>
           </div>
 
-          {/* Primary metrics: focus on capacity + future live data */}
+          {/* Updated Primary metrics: now showing LIVE POWER */}
           <div className="rounded-xl bg-slate-900/80 border border-slate-800 px-4 py-3 text-sm">
             <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
-              Primary metrics
+              Live PV Generation
             </p>
             <div className="flex items-center gap-2 mb-1">
-              <Power className="h-4 w-4 text-emerald-400" />
-              <span className="text-slate-200 font-medium">
-                {primary.capacityKw != null
-                  ? `${primary.capacityKw} W capacity`
-                  : 'Capacity: Unknown'}
+              <Zap className="h-5 w-5 text-yellow-400" />
+              <span className="text-2xl text-slate-200 font-bold">
+                {livePowerKW !== null ? `${livePowerKW}` : '---'}
+              </span>
+              <span className="text-base text-yellow-300">
+                kW
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Live Sungrow power & energy data will appear here once it&apos;s
-              available.
+              Updated every ~5 minutes.
             </p>
           </div>
         </div>
 
-        {/* Stat tiles – no duplication with Primary metrics now */}
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {/* Stat tiles – Adding Daily Yield */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+          {/* Daily Yield */}
+          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Daily Energy Yield
+            </p>
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4 text-orange-400" />
+              <p className="text-sm text-slate-200 font-medium">
+                {dailyYieldKWH !== null ? `${dailyYieldKWH} kWh` : '---'}
+              </p>
+            </div>
+          </div>
+
+          {/* Max Capacity */}
+          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Rated Capacity
+            </p>
+            <div className="flex items-center gap-2">
+              <Power className="h-4 w-4 text-emerald-400" />
+              <p className="text-sm text-slate-200 font-medium">
+                {primary.capacityKw != null
+                  ? `${primary.capacityKw} kW`
+                  : 'Unknown'}
+              </p>
+            </div>
+          </div>
+
+          {/* Location (moved from old section) */}
           <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
               Location
@@ -308,30 +359,13 @@ function SungrowPanel() {
             </p>
           </div>
 
+          {/* Install Date (moved from old section) */}
           <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
               Install Date
             </p>
             <p className="text-sm text-slate-200">
               {primary.installDate || 'Unknown'}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
-              Timezone
-            </p>
-            <p className="text-sm text-slate-200">
-              {primary.timezone || 'N/A'}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
-              Type
-            </p>
-            <p className="text-sm text-slate-200">
-              {primary.typeName || 'Unknown'}
             </p>
           </div>
         </div>

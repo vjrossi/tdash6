@@ -1,0 +1,216 @@
+Query plant real-time measuring point data
+Post
+/openapi/platform/getPowerStationRealTimeData
+
+Query plant real-time measuring point data by plant ps_id. Note: 1. This endpoint always returns the smallest unit of data. For example, Wh for yield, W for power, A for current, and V for voltage. 2. The data refreshes about every 5 minutes. It is recommended that the endpoint call frequency is no less than 5 minutes.
+1. Request parameters
+Request parameters
+Parameter type
+Required
+Parameter example
+Parameter description
+ps_id_list
+List
+Yes
+["700666130"]
+Plant ps_id Collection
+point_id_list
+List
+Yes
+["83004","83025","83024","83022"]
+Measuring Point ID Set (see Appendix 10 for specific open measuring point definitions)
+is_get_point_dict
+String
+No
+1
+Return Measuring Point Dictionary? (0: No; 1: Yes; defaults to no)
+
+{
+    "is_get_point_dict":"1",
+    "point_id_list": ["83004","83025","83024","83022"],
+    "ps_id_list": ["700666130"]
+}
+2. Return parameters
+Return parameters
+Data type
+Example value
+Description
+req_serial_num
+String
+20240826fbed497cbc7b3b879802db5c
+Request Sequence Number
+result_code
+String
+1
+Error Code
+result_msg
+String
+success
+Prompt Message
+result_data
+Map
+--
+Returned Data
+result_data.device_point_list
+List
+--
+Plant Measuring Point Collection
+result_data.device_point_list.ps_id
+Integer
+"ps_id": 700666130
+Plant ps_id
+result_data.device_point_list.uuid
+Integer
+2024524997
+UUID of the plant
+result_data.device_point_list.ps_name
+String
+PlantA
+Plant Name
+result_data.device_point_list.ps_key
+String
+700666130_11_0_0
+Plant ps_key
+result_data.device_point_list.p+point_id
+String
+"p83024": "1425229.0"
+Measuring Point Value (p1 represents the value of point_id=1)
+result_data.illegal_ps_id_list
+List
+["700666130_22_247_2","700666130_22_247_3"]
+Invalid ps_id Collection
+result_data.point_dict
+List
+[{"point_id":83004,"point_unit":"Wh","point_name":"???????"}],
+Measuring Point Definition Dictionary (returned only when is_get_point_dict is 1)
+result_data.point_dict.point_id
+String
+83025
+Measuring Point ID
+result_data.point_dict.point_name
+String
+Plant Equivalent Hours
+Measuring Point Unit
+result_data.point_dict.point_unit
+String
+h
+Measuring Point Unit
+2.1 Success examples
+{
+    "req_serial_num": "202408270a964cc89f6b740505a9968d",
+    "result_code": "1",
+    "result_msg": "success",
+    "result_data": {
+        "illegal_ps_id_list": [],
+        "point_dict": [
+            {
+                "point_id": 83022,
+                "point_unit": "Wh",
+                "point_name": "??????"
+            },
+            {
+                "point_id": 83024,
+                "point_unit": "Wh",
+                "point_name": "??????"
+            },
+            {
+                "point_id": 83025,
+                "point_unit": "h",
+                "point_name": "??????"
+            }
+        ],
+        "device_point_list": [
+            {
+                "ps_name": "iHM??",
+                "ps_key": "700666130_11_0_0",
+                "p83025": "0.0",
+                "ps_id": 700666130,
+                "p83024": "1425229.0",
+                "uuid": 2024524997,
+                "p83022": "0.0"
+            }
+        ]
+    }
+}
+
+2.2 Failure example
+{
+    "error": "invalid_token",
+    "error_description": "Invalid access token",
+    "req_serial_num": "202408265afa4caa9e21089c9674390f"
+}
+3.1 Plant Measuring Points
+Device Type	Measuring Point ID	Measuring Point Name	Unit
+Plant	83022	Daily Yield of Plant	Wh
+83024	Plant Total Yield	Wh
+83033	Plant Power	W
+83019	Plant Power/Installed Power of Plant	
+83006	Meter Daily Yield	Wh
+83020	Meter Total Yield	Wh
+83011	Meter E-daily Consumption	Wh
+83021	Accumulative Power Consumption by Meter	Wh
+83032	Meter AC Power	W
+83007	Meter PR	
+83002	Inverter AC Power	W
+83009	Inverter Daily Yield	Wh
+83004	Inverter Total Yield	Wh
+83012	P-radiation-H	W/?
+83013	Daily Irradiation	Wh/?
+83023	Plant PR	
+83005	Daily Equivalent Hours	h
+83025	Plant Equivalent Hours	h
+83018	Daily Yield (Theoretical)	Wh
+83001	Inverter AC Power Normalization	W/Wp
+83008	Daily Equivalent Hours of Inverter	h
+83010	Inverter PR	
+83016	Plant Ambient Temperature	?
+83017	Plant Module Temperature	?
+83046	PCS Total Active Power	W
+83052	Total Load Active Power	W
+83067	Total Active Power of PV	W
+83097	Daily Direct Energy Consumption	Wh
+83100	Total Direct Energy Consumption	Wh
+83102	Energy Purchased Today	Wh
+83105	Total Purchased Energy	Wh
+83106	Load Power	W
+83118	Daily Load Consumption	Wh
+83124	Total Load Consumption	Wh
+83119	Daily Feed-in Energy (PV)	Wh
+83072	Feed-in Energy Today	Wh
+83075	Feed-in Energy Total	Wh
+83252	Battery Level (SOC)	
+83129	Battery SOC	
+83232	Total field SOC	
+83233	Total field maximum rechargeable power	W
+83234	Total field maximum dischargeable power	W
+83235	Total field chargeable energy	Wh
+83236	Total field dischargeable energy	Wh
+83237	Total field energy storage maximum reactive power	W
+83238	Total field energy storage active power	W
+83239	Total field reactive power	var
+83240	Total field power factor	
+83243	Daily field charge capacity	Wh
+83241	Total field charge capacity	Wh
+83244	Daily field discharge capacity	Wh
+83242	Total field discharge capacity	Wh
+83548	Total Number of Charge/Discharge	
+83549	Grid Active Power	W
+83419	Daily Highest Inverter Power/Inverter Installed Capacity	
+83317	Power Forecast	W
+83318	Planned ES Charging/Discharging Power	W
+83319	Planned ES SOC	W
+83320	Planned Charging Power	Wh
+83321	Planned Discharging Power	Wh
+83322	ESS Daily Charge (EMS)	Wh
+83324	Energy Storage Cumulative Charge	Wh
+83323	ESS Daily Discharge (EMS)	Wh
+83325	Cumulative Discharge	Wh
+83327	Energy Storage Remaining Charge	Wh
+83326	Energy Storage Active Power (EMS)	W
+83328	Grid Active Power (EMS)	W
+83329	PV Active Power (EMS)	W
+83330	Load Active Power (EMS)	W
+83331	Daily PV Yield (EMS)	Wh
+83332	Total PV Yield	Wh
+83334	Energy Storage SOC (EMS)	
+

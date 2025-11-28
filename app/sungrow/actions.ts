@@ -9,6 +9,7 @@ import {
   SUNGROW_BASE_URL,
   SUNGROW_ENDPOINT_TOKEN,
   SUNGROW_ENDPOINT_PLANT_INFO,
+  SUNGROW_ENDPOINT_LIVE_DATA,
 } from '@/lib/sungrow-config';
 
 //
@@ -26,6 +27,11 @@ export type SungrowPlantBasicInfo = {
   timezone: string | null;
   capacityKw: number | null;
   faultStatus: number | null;
+};
+
+export type SungrowRealtimeMetrics = {
+  livePowerW: number | null;
+  dailyYieldWh: number | null;
 };
 
 //
@@ -166,15 +172,15 @@ export async function getSungrowPlantDetails(): Promise<SungrowPlantBasicInfo[]>
       headers: requestHeaders,
       body: JSON.stringify(requestBody),
     });
-    
+
     const text = await response.text();
     if (!response.ok) {
       console.error('PlantDetail HTTP error', response.status, text);
       return [];
     }
-    
+
     const data = JSON.parse(text);
-    
+
     // 🔥 token expired → try refresh
     if (data.result_code === 'er_token_login_invalid') {
       console.log('Access token expired. Trying refresh...');
@@ -185,12 +191,12 @@ export async function getSungrowPlantDetails(): Promise<SungrowPlantBasicInfo[]>
       }
       return [];
     }
-    
+
     if (data.result_code !== '1') {
       console.error('PlantDetail error:', data.result_msg);
       return [];
     }
-    
+
     const rd = data.result_data;
     if (!rd || rd.code !== '1' || !Array.isArray(rd.data_list)) return [];
 
@@ -288,5 +294,85 @@ export async function refreshSungrowToken(): Promise<boolean> {
   } catch (err) {
     console.error('[Refresh] Exception:', err);
     return false;
+  }
+}
+
+const REALTIME_POINT_IDS = {
+  LIVE_POWER: '83033', // Plant Power in W
+  DAILY_YIELD: '83022', // Daily Yield of Plant in Wh
+};
+
+export async function getSungrowRealtimeMetrics(
+  psId: string,
+): Promise<SungrowRealtimeMetrics | null> {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('sungrow_access_token')?.value;
+
+  if (!accessToken || !psId) return null;
+
+  const requestBody = {
+    appkey: SUNGROW_APP_KEY,
+    ps_id_list: [psId],
+    point_id_list: Object.values(REALTIME_POINT_IDS),
+  };
+
+  const requestHeaders = {
+    'Content-Type': 'application/json',
+    'x-access-key': SUNGROW_SECRET_KEY,
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  const url = `${SUNGROW_BASE_URL}${SUNGROW_ENDPOINT_LIVE_DATA}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: requestHeaders,
+      body: JSON.stringify(requestBody),
+      // Sungrow recommends no less than 5 min call frequency
+      next: { revalidate: 300 },
+    });
+
+    const text = await response.text();
+    if (!response.ok) {
+      console.error('RealtimeData HTTP error', response.status, text);
+      return null;
+    }
+
+    const data = JSON.parse(text);
+
+    // 🔥 token expired → try refresh
+    if (data.result_code === 'er_token_login_invalid') {
+      console.log('Access token expired. Trying refresh for realtime data...');
+      const refreshed = await refreshSungrowToken();
+      if (refreshed) {
+        console.log('Retrying realtime data fetch after refresh...');
+        return await getSungrowRealtimeMetrics(psId);
+      }
+      return null;
+    }
+
+    if (data.result_code !== '1') {
+      console.error('RealtimeData API error:', data.result_msg);
+      return null;
+    }
+
+    const devicePointList = data.result_data?.device_point_list;
+    const primaryPlantData = devicePointList?.[0];
+
+    if (!primaryPlantData) return null;
+
+    // Data points are returned as "p" + point_id, e.g., p83033
+    const livePowerStr = primaryPlantData[`p${REALTIME_POINT_IDS.LIVE_POWER}`];
+    const dailyYieldStr = primaryPlantData[`p${REALTIME_POINT_IDS.DAILY_YIELD}`];
+
+    return {
+      // Parse as float, use null if invalid or missing
+      livePowerW: livePowerStr ? parseFloat(livePowerStr) : null,
+      dailyYieldWh: dailyYieldStr ? parseFloat(dailyYieldStr) : null,
+    };
+  } catch (err) {
+    console.error('RealtimeData exception:', err);
+    return null;
   }
 }

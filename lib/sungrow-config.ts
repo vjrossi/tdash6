@@ -18,3 +18,4 @@ export const SUNGROW_BASE_URL = 'https://augateway.isolarcloud.com/';
 export const SUNGROW_ENDPOINT_TOKEN = 'openapi/apiManage/token';
 export const SUNGROW_ENDPOINT_PLANT_LIST = 'openapi/ps/getPsList';
 export const SUNGROW_ENDPOINT_PLANT_INFO = 'openapi/platform/getPowerStationDetail';
+export const SUNGROW_ENDPOINT_LIVE_DATA = 'openapi/platform/getPowerStationRealTimeData';
