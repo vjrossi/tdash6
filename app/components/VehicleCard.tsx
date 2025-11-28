@@ -3,15 +3,18 @@
 import { Vehicle } from '@/lib/types';
 import {
     BatteryCharging, Thermometer, ShieldCheck,
-    MapPin, Gauge, Fan, Snowflake, Sun, ParkingCircle, RefreshCw, PowerOff
+    MapPin, Gauge, Fan, Snowflake, Sun, ParkingCircle, RefreshCw, PowerOff, Plug
 } from 'lucide-react';
 import { useState } from 'react';
+
+// Import new charge control actions
+import { startCharge, stopCharge } from '@/app/actions'; 
 
 // --- PROPS AND UTILS ---
 
 interface VehicleCardProps {
     vehicle: Vehicle;
-    onRefresh: () => Promise<void>;
+    onRefresh: (vehicleId: string) => Promise<void>;
 }
 
 const barToPsi = (bar: number) => Math.round(bar * 14.5038);
@@ -79,16 +82,55 @@ const TyrePressure = ({ label, pressure }: { label: string; pressure?: number })
 
 export function VehicleCard({ vehicle, onRefresh }: VehicleCardProps) {
     const [isRefreshing, setIsRefreshing] = useState(false);
+    // NEW: State for command execution feedback
+    const [commandStatus, setCommandStatus] = useState<{ message: string; isError: boolean } | null>(null);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            await onRefresh();
+            // Pass vehicle.id_s to onRefresh as it's typically what the parent handler expects
+            await onRefresh(vehicle.id_s); 
+        } finally {
+            setIsRefreshing(false);
+            setCommandStatus(null); // Clear status on manual refresh
+        }
+    };
+    
+    // NEW: Generic command handler
+    const handleCommand = async (command: 'start' | 'stop') => {
+        setCommandStatus(null);
+        setIsRefreshing(true); 
+        
+        const action = command === 'start' ? startCharge : stopCharge;
+        
+        try {
+            const result = await action(vehicle.id_s);
+            
+            if (result.success) {
+                setCommandStatus({ 
+                    message: command === 'start' ? 'Charge started successfully.' : 'Charge stopped successfully.',
+                    isError: false 
+                });
+                // After command, trigger a refresh to update status immediately
+                await onRefresh(vehicle.id_s);
+            } else {
+                setCommandStatus({ 
+                    message: result.error || `Failed to send ${command} command.`, 
+                    isError: true 
+                });
+                // Important: Even if command fails, try to refresh vehicle data
+                await onRefresh(vehicle.id_s); 
+            }
+        } catch (e: any) {
+            setCommandStatus({ 
+                message: `An unexpected error occurred: ${e.message}`, 
+                isError: true 
+            });
         } finally {
             setIsRefreshing(false);
         }
     };
-    
+
     // Offline/Asleep State
     if (vehicle.error || !vehicle.vehicle_data) {
         return (
@@ -106,6 +148,13 @@ export function VehicleCard({ vehicle, onRefresh }: VehicleCardProps) {
                     <PowerOff className="h-16 w-16 text-gray-500 mb-4" />
                     <p className="text-xl font-semibold text-white">Vehicle Offline</p>
                     <p className="text-gray-400">{vehicle.error || "Could not connect to the vehicle."}</p>
+                    
+                     {/* NEW: Command Status Display for Offline state */}
+                    {commandStatus && (
+                        <div className={`mt-4 w-full p-3 rounded-lg text-sm font-medium ${commandStatus.isError ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}`}>
+                            {commandStatus.message}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -114,7 +163,12 @@ export function VehicleCard({ vehicle, onRefresh }: VehicleCardProps) {
     const { charge_state, climate_state, vehicle_state, drive_state } = vehicle.vehicle_data;
 
     const isCharging = charge_state.charging_state === 'Charging';
+    const isPluggedIn = charge_state.charging_state !== 'Disconnected';
     const climateStatus = climate_state.is_climate_on ? (climate_state.fan_status > 0 ? 'On' : 'Standby') : 'Off';
+    
+    // Logic for button state
+    const canStart = isPluggedIn && !isCharging;
+    const canStop = isCharging;
 
     return (
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-cyan-500/20">
@@ -128,6 +182,53 @@ export function VehicleCard({ vehicle, onRefresh }: VehicleCardProps) {
                     <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
             </div>
+            
+            {/* NEW: Charging Controls Section */}
+            <div className="p-6 border-b border-gray-700/50">
+                <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-white flex items-center">
+                        <Plug className="h-5 w-5 mr-2 text-cyan-400" />
+                        Charging Controls
+                    </h4>
+                    <p className={`text-xs font-medium px-2 py-1 rounded-full ${isPluggedIn ? 'bg-green-600/30 text-green-400' : 'bg-red-600/30 text-red-400'}`}>
+                        {isPluggedIn ? 'PLUGGED IN' : 'DISCONNECTED'}
+                    </p>
+                </div>
+                
+                {/* Status Message */}
+                {commandStatus && (
+                    <div className={`mb-3 p-3 rounded-lg text-sm font-medium ${commandStatus.isError ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}`}>
+                        {commandStatus.message}
+                    </div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex space-x-4">
+                    <button
+                        onClick={() => handleCommand('start')}
+                        disabled={!canStart || isRefreshing}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                            canStart && !isRefreshing
+                                ? 'bg-green-600 hover:bg-green-700 text-white'
+                                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-70'
+                        }`}
+                    >
+                        {isCharging ? 'CHARGING' : 'START CHARGE'}
+                    </button>
+                    <button
+                        onClick={() => handleCommand('stop')}
+                        disabled={!canStop || isRefreshing}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                            canStop && !isRefreshing
+                                ? 'bg-red-600 hover:bg-red-700 text-white'
+                                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-70'
+                        }`}
+                    >
+                        STOP CHARGE
+                    </button>
+                </div>
+            </div>
+
 
             {/* Main Data Grid */}
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">

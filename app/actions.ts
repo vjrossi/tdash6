@@ -75,6 +75,61 @@ export async function logout() {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Helper function to send generic commands
+async function sendVehicleCommand(vehicleId: string, command: string) {
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
+    if (!baseUrl) {
+        return { success: false, error: "API base URL is not configured." };
+    }
+
+    const url = `${baseUrl}/api/1/vehicles/${vehicleId}/command/${command}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({}), // Most simple commands require an empty JSON body
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Tesla API command errors are often in the response body
+            return { success: false, error: data.error || data.response?.reason || `Failed command: HTTP ${response.status}` };
+        }
+
+        // Successful commands return a response object with a result field
+        if (data.response?.result !== true) {
+            return { success: false, error: data.response?.reason || 'Command failed unexpectedly.' };
+        }
+
+        return { success: true };
+
+    } catch (error) {
+        console.error(`Command ${command} fetch error:`, error);
+        return { success: false, error: `Failed to connect to Tesla servers for ${command}.` };
+    }
+}
+
+// NEW: Start Charging Command
+export async function startCharge(vehicleId: string) {
+    return sendVehicleCommand(vehicleId, 'charge_start');
+}
+
+// NEW: Stop Charging Command
+export async function stopCharge(vehicleId: string) {
+    return sendVehicleCommand(vehicleId, 'charge_stop');
+}
+
+
 export async function getVehicles() {
     const accessToken = await getAccessToken();
     if (!accessToken) {
