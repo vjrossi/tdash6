@@ -126,16 +126,16 @@ function TeslaPanel() {
           </button>
         </div>
       ) : vehiclesWithData.length > 0 ? (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {vehiclesWithData.map((vehicle) => (
-            <VehicleCard
-              key={vehicle.id_s}
-              vehicle={vehicle}
-              onRefresh={() => handleRefresh(vehicle.id_s)}
-            />
+            <div key={vehicle.id_s} className="w-full">
+              <VehicleCard
+                vehicle={vehicle}
+                onRefresh={() => handleRefresh(vehicle.id_s)}
+              />
+            </div>
           ))}
-        </div>
-      ) : (
+        </div>) : (
         <div className="py-8 text-center text-sm text-slate-400">
           No vehicles were found for your account.
         </div>
@@ -257,50 +257,34 @@ function SungrowPanel() {
             </div>
           </div>
 
-          {/* This area is ready for live metrics later */}
+          {/* Primary metrics: focus on capacity + future live data */}
           <div className="rounded-xl bg-slate-900/80 border border-slate-800 px-4 py-3 text-sm">
             <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
               Primary metrics
             </p>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <Power className="h-4 w-4 text-emerald-400" />
-                <span className="text-slate-200 font-medium">
-                  {primary.capacityKw != null
-                    ? `${primary.capacityKw} W capacity`
-                    : 'Capacity: Unknown'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <Clock className="h-4 w-4" />
-                <span>
-                  Installed:{' '}
-                  {primary.installDate || 'Unknown install date'}
-                </span>
-              </div>
-              <div className="text-xs text-slate-400">
-                Type: {primary.typeName || 'Unknown'} · Timezone:{' '}
-                {primary.timezone || 'N/A'}
-              </div>
+            <div className="flex items-center gap-2 mb-1">
+              <Power className="h-4 w-4 text-emerald-400" />
+              <span className="text-slate-200 font-medium">
+                {primary.capacityKw != null
+                  ? `${primary.capacityKw} W capacity`
+                  : 'Capacity: Unknown'}
+              </span>
             </div>
+            <p className="text-[11px] text-slate-400">
+              Live Sungrow power & energy data will appear here once it&apos;s
+              available.
+            </p>
           </div>
         </div>
 
-        {/* Stat tiles (similar feel to Tesla’s little panels) */}
+        {/* Stat tiles – no duplication with Primary metrics now */}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
-              Capacity
+              Location
             </p>
-            <p className="text-2xl font-semibold">
-              {primary.capacityKw != null ? (
-                <>
-                  {primary.capacityKw}
-                  <span className="ml-1 text-sm text-slate-400">W</span>
-                </>
-              ) : (
-                <span className="text-sm text-slate-400">Unknown</span>
-              )}
+            <p className="text-sm text-slate-200">
+              {primary.location || 'Not specified'}
             </p>
           </div>
 
@@ -376,7 +360,6 @@ function SungrowPanel() {
     </div>
   );
 }
-
 
 /* ---------- Combined page shell ---------- */
 
