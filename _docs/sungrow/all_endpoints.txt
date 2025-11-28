@@ -1,0 +1,64 @@
+All endpoints are POST
+
+Refresh Token:
+
+Obtain token via authorization code 
+
+Refresh Token 
+
+Monitoring:
+
+Query Plant List 
+
+Query Basic Plant Info 
+
+Query Device List of the Plant 
+
+Query Device Real-Time Measuring Point Data 
+
+Query Historical Minute-Level Measuring Point Data of Devices of the Same Type 
+
+Query Historical Daily/Monthly/Yearly Measuring Point Data of Devices of the Same Type 
+
+Query plant real-time measuring point data 
+
+Query Historical Minute-Level Measuring Point Data of Plants 
+
+Query Historical Daily/Monthly/Annual Measuring Point Data of Plants 
+
+Query Device Fault Alarm 
+
+Gets a list of optimizer devices under the power plant 
+
+Query optimizer's real-time data API 
+
+Queries the minute level data of the historical stations of the optimizer 
+
+Query the historical datapoint datapoint of the optimizer 
+
+Grid Control:
+
+Parameter Configuration Verification 
+
+Parameter Configuration Task Dispatch 
+
+Query Parameter Configuration Result 
+
+Dispatch Read-Only Parameter Read Task 
+
+Read-Only Parameter Read Result Query 
+
+Query Read-Only Parameter Definition 
+
+Query the device parameter setting history 
+
+Live Data:
+Live Data Subscription Function Usage Instructions 
+
+Retrieve the corresponding Mqtt information based on the appkey 
+
+Enable Live Data Upload 
+
+Disable Live Data Upload 
+
+Get History Data 
