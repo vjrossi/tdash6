@@ -3,24 +3,40 @@
 import Image from "next/image";
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getTokens } from './sungrow/actions';
+import { useRouter } from 'next/navigation';
+
+import { getTokens as getSungrowTokens } from './sungrow/actions';
+import { getAccessToken } from './actions';
 
 export default function Home() {
   const [hasSungrow, setHasSungrow] = useState(false);
+  const router = useRouter();
 
+  // Check both Sungrow + Tesla on load
   useEffect(() => {
     async function check() {
       try {
-        const { refreshToken } = await getTokens();
-        setHasSungrow(!!refreshToken);
+        // Sungrow status
+        const sungrow = await getSungrowTokens();
+        const sungrowConnected = !!sungrow?.refreshToken;
+        setHasSungrow(sungrowConnected);
+
+        // Tesla status
+        const teslaAccessToken = await getAccessToken();
+        const teslaConnected = !!teslaAccessToken;
+
+        // If either integration exists, go to combined dashboard
+        if (sungrowConnected || teslaConnected) {
+          router.replace('/combined-dashboard');
+        }
       } catch (err) {
-        console.error("Error checking Sungrow tokens:", err);
+        console.error("Error checking integration tokens:", err);
         setHasSungrow(false);
       }
     }
 
-    check();
-  }, []);
+    void check();
+  }, [router]);
 
   const handleLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_TESLA_CLIENT_ID;
@@ -55,7 +71,7 @@ export default function Home() {
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
 
           <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Tesla & Sungrow API Demo
+            Tesla &amp; Sungrow API Demo
           </h1>
 
           <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
@@ -72,7 +88,7 @@ export default function Home() {
               Login with Tesla
             </button>
 
-            {/* Sungrow: Smart button */}
+            {/* Sungrow: same button logic as before */}
             {!hasSungrow ? (
               <Link
                 href="/sungrow"
