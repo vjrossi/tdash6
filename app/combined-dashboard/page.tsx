@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 
 import {
   getVehicles,
@@ -29,7 +30,7 @@ import {
 /* ---------- Tesla panel (reuses Tesla dashboard logic) ---------- */
 
 type VehicleWithData = Vehicle & {
-  vehicle_data: unknown | null;
+  vehicle_data: any | null;
   error: string | null;
 };
 
@@ -38,6 +39,9 @@ function TeslaPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Guard against double-effect calls in StrictMode (dev) or weird remounts
+  const hasFetchedOnce = useRef(false);
+
   const fetchAllVehicleData = async () => {
     setLoading(true);
     setError(null);
@@ -45,12 +49,11 @@ function TeslaPanel() {
     try {
       const vehicles: Vehicle[] | null = await getVehicles();
 
-      if (vehicles && vehicles.length > 0) {
-        const vehicleDataResults = await Promise.all(
-          vehicles.map((v) => getVehicleData(v.id_s))
-        );
+      if (vehicles) {
+        const vehicleDataPromises = vehicles.map((v) => getVehicleData(v.id_s));
+        const vehicleDataResults = await Promise.all(vehicleDataPromises);
 
-        const withData: VehicleWithData[] = vehicles.map((vehicle, index) => {
+        const newVehiclesWithData: VehicleWithData[] = vehicles.map((vehicle, index) => {
           const dataResult = vehicleDataResults[index];
           return {
             ...vehicle,
@@ -59,7 +62,7 @@ function TeslaPanel() {
           };
         });
 
-        setVehiclesWithData(withData);
+        setVehiclesWithData(newVehiclesWithData);
       } else {
         setVehiclesWithData([]);
         setError(
@@ -75,20 +78,23 @@ function TeslaPanel() {
   };
 
   useEffect(() => {
+    if (hasFetchedOnce.current) return;
+    hasFetchedOnce.current = true;
+
     void fetchAllVehicleData();
   }, []);
 
   const handleRefresh = async (vehicleId: string) => {
     try {
       const dataResult = await getVehicleData(vehicleId);
-      setVehiclesWithData((current) =>
-        current.map((v) =>
+      setVehiclesWithData((currentVehicles) =>
+        currentVehicles.map((v) =>
           v.id_s === vehicleId
             ? {
-              ...v,
-              vehicle_data: dataResult.success ? dataResult.data : null,
-              error: !dataResult.success ? dataResult.error : null,
-            }
+                ...v,
+                vehicle_data: dataResult.success ? dataResult.data : null,
+                error: !dataResult.success ? dataResult.error : null,
+              }
             : v
         )
       );
@@ -127,15 +133,29 @@ function TeslaPanel() {
         </div>
       ) : vehiclesWithData.length > 0 ? (
         <div className="grid grid-cols-1 gap-6">
-          {vehiclesWithData.map((vehicle) => (
-            <div key={vehicle.id_s} className="w-full">
-              <VehicleCard
-                vehicle={vehicle}
-                onRefresh={() => handleRefresh(vehicle.id_s)}
-              />
-            </div>
-          ))}
-        </div>) : (
+          {vehiclesWithData.map((vehicle) => {
+            const sleeping =
+              typeof vehicle.error === 'string' &&
+              /asleep|offline|sleep|waking/i.test(vehicle.error);
+
+            return (
+              <div key={vehicle.id_s} className="w-full space-y-1">
+                <VehicleCard
+                  vehicle={vehicle}
+                  onRefresh={() => handleRefresh(vehicle.id_s)}
+                />
+
+                {sleeping && (
+                  <p className="text-xs text-slate-400">
+                    Vehicle appears to be asleep. Wake it using the Tesla app, then press
+                    Refresh.
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
         <div className="py-8 text-center text-sm text-slate-400">
           No vehicles were found for your account.
         </div>
