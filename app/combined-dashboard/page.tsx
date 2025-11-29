@@ -8,6 +8,7 @@ import {
   getVehicles,
   getVehicleData,
   logout as teslaLogout,
+  getAccessToken,
 } from '@/app/actions';
 import { VehicleCard } from '@/app/components/VehicleCard';
 import type { Vehicle } from '@/lib/types';
@@ -42,13 +43,32 @@ function TeslaPanel() {
   const [vehiclesWithData, setVehiclesWithData] = useState<VehicleWithData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   // Guard against double-effect calls in StrictMode (dev) or weird remounts
   const hasFetchedOnce = useRef(false);
 
+  const handleTeslaLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_TESLA_CLIENT_ID;
+    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/callback`;
+    const scope = 'openid vehicle_device_data vehicle_cmds vehicle_charging_cmds';
+    const responseType = 'code';
+    const state = 'reconnect_from_dashboard';
+
+    const teslaAuthUrl =
+      `https://auth.tesla.com/oauth2/v3/authorize?client_id=${clientId}` +
+      `&redirect_uri=${redirectUri}` +
+      `&response_type=${responseType}` +
+      `&scope=${scope}` +
+      `&state=${state}`;
+
+    window.location.href = teslaAuthUrl;
+  };
+
   const fetchAllVehicleData = async () => {
     setLoading(true);
     setError(null);
+    setNeedsLogin(false);
 
     try {
       const vehicles: Vehicle[] | null = await getVehicles();
@@ -68,10 +88,16 @@ function TeslaPanel() {
 
         setVehiclesWithData(newVehiclesWithData);
       } else {
-        setVehiclesWithData([]);
-        setError(
-          'No vehicles were found for your account, or there was an error fetching data.'
-        );
+        const token = await getAccessToken();
+        if (!token) {
+          setNeedsLogin(true);
+          setError('Tesla session expired or not connected.');
+        } else {
+          setVehiclesWithData([]);
+          setError(
+            'No vehicles were found for your account, or there was an error fetching data.'
+          );
+        }
       }
     } catch (e) {
       console.error('Failed to fetch vehicle data', e);
@@ -128,12 +154,22 @@ function TeslaPanel() {
       ) : error ? (
         <div className="space-y-4 py-8 text-center">
           <p className="text-red-400">{error}</p>
-          <button
-            onClick={fetchAllVehicleData}
-            className="inline-flex items-center rounded bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-          >
-            Try Again
-          </button>
+          
+          {needsLogin ? (
+            <button
+              onClick={handleTeslaLogin}
+              className="inline-flex items-center rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700"
+            >
+              Connect Tesla
+            </button>
+          ) : (
+            <button
+              onClick={fetchAllVehicleData}
+              className="inline-flex items-center rounded bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
+            >
+              Try Again
+            </button>
+          )}
         </div>
       ) : vehiclesWithData.length > 0 ? (
         <div className="grid grid-cols-1 gap-6">
