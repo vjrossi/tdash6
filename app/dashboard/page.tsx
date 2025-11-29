@@ -8,7 +8,6 @@ import { LogOut, Plus, RefreshCw } from 'lucide-react';
 import {
   getVehicles,
   getVehicleData,
-  logout as teslaLogout,
   disconnect as teslaDisconnect,
   getAccessToken as getTeslaToken,
 } from '@/app/actions';
@@ -18,7 +17,6 @@ import type { Vehicle } from '@/lib/types';
 // Sungrow Imports
 import {
   getTokens as getSungrowTokens,
-  logout as sungrowLogout,
   disconnect as sungrowDisconnect,
   getSungrowPlantDetails,
   getSungrowRealtimeMetrics,
@@ -73,15 +71,15 @@ export default function UnifiedDashboard() {
   const handleGlobalLogout = async () => {
     setStatus(prev => ({ ...prev, loading: true }));
     
-    // Execute both disconnects in parallel without redirecting from server actions
+    // Execute both disconnects in parallel without redirecting
     await Promise.all([
       teslaDisconnect(),
       sungrowDisconnect()
     ]);
 
-    // Force a router refresh to clear client cache, then redirect
+    // Refresh the router cache and reload data to show empty state
     router.refresh();
-    router.push('/');
+    await loadData();
   };
 
   // --- Data Fetching ---
