@@ -65,6 +65,14 @@ export async function logout() {
   redirect('/');
 }
 
+export async function disconnect() {
+  const cookieStore = await cookies();
+  cookieStore.delete('sungrow_access_token');
+  cookieStore.delete('sungrow_refresh_token');
+  cookieStore.delete('sungrow_ps_list');
+  return { success: true };
+}
+
 //
 // TOKEN EXCHANGE
 //

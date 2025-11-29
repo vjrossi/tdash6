@@ -48,12 +48,6 @@ This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API
 * **Framework:** Uses Tailwind CSS for a clean, modern, and beautiful dark-mode design.
 * **Aesthetics:** UI components are polished with icons, balanced layouts, and clear typography.
 
-// ... existing code ...
-## Styling & Design
-
-* **Framework:** Uses Tailwind CSS for a clean, modern, and beautiful dark-mode design.
-* **Aesthetics:** UI components are polished with icons, balanced layouts, and clear typography.
-
 ## Deployment
 
 * **Platform:** Vercel

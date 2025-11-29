@@ -70,6 +70,12 @@ export async function logout() {
     redirect('/');
 }
 
+export async function disconnect() {
+    await deleteAuthCookie();
+    // No redirect here, allowing the client to continue execution
+    return { success: true };
+}
+
 
 // --- VEHICLE ACTIONS ---
 
