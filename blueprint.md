@@ -123,3 +123,4 @@ NEXT_PUBLIC_TESLA_API_BASE_URL=https://localhost:8080
 
 # Required to allow Node.js to trust the self-signed cert
 NODE_TLS_REJECT_UNAUTHORIZED=0
+

@@ -1,0 +1,111 @@
+10. Tesla Proxy Deployment on Google Cloud VM (Compute Engine)
+
+This section documents the exact setup used to run the Tesla Vehicle Command Proxy on a Google Cloud Compute Engine e2-micro VM (US region) after Cloud Run proved incompatible with the TLS requirements of the official Tesla proxy.
+
+Why a VM Instead of Cloud Run?
+
+The Tesla tesla-http-proxy requires inbound HTTPS (TLS).
+
+Google Cloud Run terminates TLS before traffic reaches the container and only passes plain HTTP internally.
+
+This mismatch caused the proxy to crash on startup.
+
+Running the proxy on a dedicated VM preserves full TLS support and keeps compatibility with Tesla’s expected behavior.
+
+VM Configuration
+
+Service: Google Compute Engine
+
+Machine Type: e2-micro (fits in Google’s Always-Free tier)
+
+Region: us-central1-a (cheapest region, eligible for free usage)
+
+OS: Debian 12
+
+Firewall Tag: tesla-proxy (allows port 443)
+
+Docker Installed: Yes
+
+Deployment Steps
+1. Create the VM (from Cloud Shell)
+gcloud compute instances create tesla-proxy-vm \
+  --zone=us-central1-a \
+  --machine-type=e2-micro \
+  --image-family=debian-12 \
+  --image-project=debian-cloud \
+  --boot-disk-size=10GB \
+  --tags=tesla-proxy
+
+2. SSH into the VM
+gcloud compute ssh tesla-proxy-vm --zone=us-central1-a
+
+3. Install Docker (on the VM)
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo usermod -aG docker $USER
+
+
+(Reconnect to apply Docker group permissions.)
+
+4. Copy Proxy Files from Cloud Shell to the VM
+
+From Cloud Shell:
+
+gcloud compute scp --recurse ~/tesla-proxy tesla-proxy-vm:~/ --zone=us-central1-a
+
+
+Files now on the VM:
+
+~/tesla-proxy/Dockerfile
+~/tesla-proxy/private-key.pem
+~/tesla-proxy/public-key.pem
+~/tesla-proxy/certs/tls-cert.pem
+~/tesla-proxy/certs/tls-key.pem
+
+5. Build the Docker Image (on the VM)
+cd ~/tesla-proxy
+docker build -t tesla-proxy .
+
+6. Run the Proxy on Port 443 with TLS
+
+(Inside ~/tesla-proxy on the VM)
+
+sudo docker run -d --name tesla-proxy \
+  -p 443:443 \
+  tesla-proxy \
+  /root/tesla-http-proxy \
+    -tls-key /root/config/tls-key.pem \
+    -cert /root/config/tls-cert.pem \
+    -key-file /root/private-key.pem \
+    -host 0.0.0.0 \
+    -port 443 \
+    -verbose
+
+7. Verify the Proxy Is Working
+
+From your local machine:
+
+curl.exe -k https://<VM_EXTERNAL_IP>
+
+
+Successful response example:
+
+{"response":null,"error":"client did not provide an OAuth token","error_description":""}
+
+
+This confirms:
+
+HTTPS is working
+
+TLS certificate is accepted (with -k due to self-signed cert)
+
+The proxy is running correctly and responding
+
+Result
+
+You now have a fully functional Tesla Command Proxy running at:
+
+https://<YOUR_VM_PUBLIC_IP>
+
+
+This endpoint can be safely used by your Next.js frontend to send signed vehicle commands through your paired Tesla key.
