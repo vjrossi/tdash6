@@ -1,54 +1,80 @@
-# Project Blueprint
+# Project Blueprint: T-Dash
 
-## Overview
+## 1. Project Overview
+**T-Dash** is a unified energy dashboard that aggregates real-time data from **Tesla Vehicles** (via Fleet API) and **Sungrow Solar Inverters** (via iSolarCloud API). It is built as a **Single-Page Application (SPA)** where users can view and manage all their energy assets in one place.
 
-This application integrates with the Tesla Fleet API and Sungrow iSolarCloud API to provide users with a comprehensive, real-time dashboard of their vehicles and solar energy systems.
+## 2. Tech Stack & Architecture
+* **Framework:** Next.js 15+ (App Router).
+* **Language:** TypeScript.
+* **Styling:** Tailwind CSS (Dark Mode default) with Lucide React icons.
+* **State Management:** Server Actions for data fetching; React State for UI interaction.
+* **Deployment:** Vercel (recommended).
 
-## Sungrow Authentication Flow Improvement
+## 3. Core Philosophy: "No Database"
+The application does **not** use a backend database to store user accounts.
+* **Session:** User identity is defined solely by valid **HTTP-Only Cookies** (`tesla_access_token`, `sungrow_access_token`) stored in the user's browser.
+* **Persistence:** Tokens are managed via secure cookies. If cookies are cleared, the user is "logged out."
 
-* **Objective:** Create a seamless user experience by automatically redirecting to the Sungrow dashboard after a successful authentication.
-* **Implementation:**
-    * The `app/auth/sungrow/page.tsx` file has been updated to handle the OAuth 2.0 callback.
-    * Upon receiving a successful response from the `getSungrowToken` server action, the user is now programmatically redirected to the `/sungrow/dashboard` page using the `useRouter` hook from `next/navigation`.
-    * The redundant and confusing `app/sungrow/callback/page.tsx` file has been deleted to streamline the codebase.
-* **Status:** **Completed**
+## 4. Authentication & Token Management
 
-## Build Error Resolution
+### General Flow
+* **OAuth 2.0:** Both services use OAuth Authorization Code flow.
+* **Server Actions:** All token exchanges happen server-side to keep secrets safe.
+* **Redirects:** OAuth callbacks redirect the user back to `/dashboard` immediately after success.
 
-* **Objective:** Resolve persistent build errors that were preventing successful deployment.
-* **Root Cause:** The primary issue was improper handling of the `cookies()` function from `next/headers` in Server Actions, leading to TypeScript type errors. A secondary issue was a missing null check for a URL search parameter.
-* **Solution:**
-    * **Cookie Handling:** Refactored `app/sungrow/actions.ts` to consistently use `(await cookies())` for all cookie interactions, mirroring the working implementation in `app/actions.ts`.
-    * **Null Check:** Added validation in the callback page to ensure the `code` URL parameter is present before use.
-* **Status:** **Completed**
+### Logout Strategy (Crucial)
+* **Race Condition Fix:** We do **not** use `redirect()` inside server-side logout actions because calling multiple redirects in parallel causes cancellation errors.
+* **"Disconnect" Pattern:**
+    * Server Actions (`teslaDisconnect`, `sungrowDisconnect`) strictly **delete cookies** and return `{ success: true }`.
+    * The Client Component (`/dashboard`) awaits these promises and then triggers `router.refresh()` or `router.push('/')`.
 
-## Tesla Integration
+## 5. Routing Structure
 
-* **Authentication:** Utilizes Tesla's OAuth 2.0 for secure login and stores the access token in a secure HTTP-only cookie.
-* **Dashboard:** A unified view displaying detailed data for all of the user's vehicles.
-* **Logout:** A secure logout function is provided.
+### Root (`/`)
+* **Behavior:** Acts as a middleware/gateway.
+* **Logic:** Automatically redirects all traffic to `/dashboard`. There is no separate "Landing Page."
 
-## Sungrow Integration
+### Dashboard (`/dashboard`)
+* **Role:** The single authenticated view for the application.
+* **Logic:**
+    1.  Checks for Tesla and Sungrow tokens server-side (`loadData`).
+    2.  If a service is **connected**, it fetches and displays the data card.
+    3.  If a service is **disconnected**, it displays a "Connect [Service]" ghost card in the grid.
+    4.  Allows users to toggle services independently without leaving the page.
 
-* **Purpose:** Allows users to connect their Sungrow solar panel inverter to view energy data.
-* **Authentication Flow:**
-    1.  User clicks "Connect to Sungrow" and is redirected to the Sungrow iSolarCloud authorization page.
-    2.  After approval, they are redirected back to the application's callback handler.
-    3.  A server action exchanges the authorization `code` for an access token.
-    4.  Upon success, the user is automatically redirected to the `/sungrow/dashboard`.
-* **Token Exchange:** A server action securely handles the code-for-token exchange.
-* **Configuration:** API keys and redirect URLs are managed via environment variables.
+### Auth Callbacks
+* `app/callback/client-page.tsx` (Tesla) -> Redirects to `/dashboard`.
+* `app/auth/sungrow/page.tsx` (Sungrow) -> Redirects to `/dashboard`.
 
-## User Experience Improvements
+## 6. Integrations
 
-* **Tesla Re-authentication:** The combined dashboard now intelligently detects if the Tesla session has expired (while Sungrow remains active) and provides a direct "Connect Tesla" button, preventing users from getting stuck in a "No vehicles found" state.
+### Tesla Fleet API
+* **Data:** Battery level, range, climate status, tyre pressure, location, odometer.
+* **Controls:** Start/Stop Charging.
+* **Vehicle State Policy:**
+    * **Never Auto-Wake:** The app checks `vehicle.state` first.
+    * **Asleep:** If "asleep", the app displays a "Moon" icon and **does not** call detailed data endpoints. It relies on the user to wake the car externally or via a manual "Refresh" action if implemented.
+    * **Offline:** Distinct from "Asleep", indicated by a connection error.
 
-## Styling & Design
+### Sungrow iSolarCloud API
+* **Data:** Real-time PV generation (kW), Daily Yield (kWh), Total Capacity, Plant Location.
+* **Token Refresh:** Server actions automatically attempt to refresh the Sungrow token if an API call fails with a specific expiry code.
 
-* **Framework:** Uses Tailwind CSS for a clean, modern, and beautiful dark-mode design.
-* **Aesthetics:** UI components are polished with icons, balanced layouts, and clear typography.
+## 7. UI Components
 
-## Deployment
+### `PlantCard`
+* Displays solar stats.
+* Matches the visual language of the vehicle card.
 
-* **Platform:** Vercel
-* **Method:** The application is deployed to Vercel, leveraging its native support for Next.js features like Server Actions and edge caching.
+### `VehicleCard`
+* Displays vehicle stats.
+* Includes interactive charging controls.
+* Handles "Asleep" vs "Online" states visually.
+
+## 8. Development Guidelines
+* **Strict Types:** Always define return types for Server Actions (e.g., `: Promise<Vehicle[] | null>`) to avoid build errors.
+* **Client vs Server:** Keep UI interactive (Client Components) but fetch data securely (Server Actions).
+* **Cookies:** Use `(await cookies())` pattern for Next.js 15+ compatibility.
+
+---
+*Last Updated: Current State of Production*
