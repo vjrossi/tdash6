@@ -58,6 +58,7 @@ The application does **not** use a backend database to store user accounts.
 * **Commands (WRITE):** Start/Stop Charging.
     * **Route:** Must go through **Local Vehicle Command Proxy** (see Section 9).
     * **Requirement:** Commands require cryptographic signing using a private key.
+    * **Data Field:** Commands (Start/Stop Charge) MUST use the **VIN**, not the internal `id_s`.
 
 ### Sungrow iSolarCloud API
 * **Data:** Real-time PV generation (kW), Daily Yield (kWh), Total Capacity, Plant Location.
@@ -102,6 +103,16 @@ We use a "Sidecar" architecture where the Next.js app delegates signing to a loc
     * Requires `private-key.pem` (EC Private Key) and `public-key.pem` inside the folder.
 * **Command:** `docker compose up --build`.
 * **Port:** Exposes `https://localhost:8080`.
+
+### Domain Validation & Pairing (Critical Setup)
+These steps are performed **once** to establish trust between the car and the app. They are NOT stored in the repository.
+
+1.  **Host Public Key:** The `public-key.pem` file must be hosted on the domain registered with Tesla at:
+    `https://<your-domain>/.well-known/appspecific/com.tesla.3p.public-key.pem`
+2.  **Register:** The domain and key were registered via the Tesla Developer API `register` endpoint.
+3.  **Vehicle Pairing (The "Magic Link"):** To authorize the app to send commands to a specific vehicle, the owner must open the following link on a mobile device with the Tesla App installed:
+    `https://www.tesla.com/_ak/<your-domain>`
+    * This process "enrolls" the app's public key onto the vehicle's keychain, allowing the vehicle to trust commands signed by the proxy.
 
 ### Environment Configuration (`.env.local`)
 To make Next.js talk to this self-signed local proxy:
