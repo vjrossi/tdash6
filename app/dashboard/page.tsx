@@ -29,9 +29,8 @@ import { PlantCard } from '@/app/components/PlantCard';
 
 type VehicleWithData = Vehicle & {
   vehicle_data: any | null;
-  error: string | null;
+  error: string | null | undefined;
 };
-
 interface DashboardState {
   teslaConnected: boolean;
   sungrowConnected: boolean;
