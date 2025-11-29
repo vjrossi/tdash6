@@ -3,31 +3,46 @@
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
 
-// --- AUTHENTICATION ACTIONS ---
+// --- CONFIGURATION ---
+const TESLA_CLOUD_URL = 'https://fleet-api.prd.na.vn.cloud.tesla.com';
+
+// --- DEBUG ACTION ---
+export async function debugServerEnv() {
+  console.log("\n====== SERVER ENVIRONMENT DEBUG ======");
+  console.log("NEXT_PUBLIC_TESLA_API_BASE_URL:", process.env.NEXT_PUBLIC_TESLA_API_BASE_URL || "MISSING");
+  console.log("======================================\n");
+  return { success: true };
+}
+
+// --- AUTH HELPERS ---
 
 export async function getAccessToken() {
-    const accessToken = (await cookies()).get('tesla_access_token')?.value;
-    return accessToken;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('tesla_access_token');
+  return token?.value;
 }
 
 async function setAuthCookie(token: string, expiresIn: number) {
-    (await cookies()).set('tesla_access_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: expiresIn,
-    });
+  const cookieStore = await cookies();
+  cookieStore.set('tesla_access_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: expiresIn,
+  });
 }
 
 async function deleteAuthCookie() {
-    (await cookies()).delete('tesla_access_token');
+  const cookieStore = await cookies();
+  cookieStore.delete('tesla_access_token');
 }
 
 const exchangeSchema = z.object({
   code: z.string(),
 });
+
+// --- AUTH ACTIONS ---
 
 export async function exchangeCodeForToken(code: string) {
   const validation = exchangeSchema.safeParse({ code });
@@ -36,6 +51,9 @@ export async function exchangeCodeForToken(code: string) {
     return { success: false, error: 'Invalid authorization code.' };
   }
 
+  // 1. APPLY YOUR FIX: Manually append $i
+  const secret = `${process.env.TESLA_CLIENT_SECRET}$i`;
+
   try {
     const response = await fetch('https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token', {
       method: 'POST',
@@ -43,20 +61,21 @@ export async function exchangeCodeForToken(code: string) {
       body: JSON.stringify({
         grant_type: 'authorization_code',
         client_id: process.env.NEXT_PUBLIC_TESLA_CLIENT_ID,
-        client_secret: process.env.TESLA_CLIENT_SECRET,
+        client_secret: secret, // Using your manual fix
         code: validation.data.code,
         redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/callback`,
+        audience: TESLA_CLOUD_URL // Required!
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return { success: false, error: data.error_description || 'An unknown error occurred.' };
+      console.error("Tesla Auth Failed:", data);
+      return { success: false, error: data.error_description || 'Authentication failed.' };
     }
 
     await setAuthCookie(data.access_token, data.expires_in);
-
     return { success: true };
 
   } catch (error) {
@@ -66,167 +85,125 @@ export async function exchangeCodeForToken(code: string) {
 }
 
 export async function logout() {
-    await deleteAuthCookie();
-    redirect('/');
+  await deleteAuthCookie();
+  redirect('/');
 }
 
 export async function disconnect() {
-    await deleteAuthCookie();
-    // No redirect here, allowing the client to continue execution
-    return { success: true };
+  await deleteAuthCookie();
+  return { success: true };
 }
 
-
-// --- VEHICLE ACTIONS ---
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper function to send generic commands
-async function sendVehicleCommand(vehicleId: string, command: string) {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-        return { success: false, error: "Unauthorized" };
-    }
-
-    const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
-    if (!baseUrl) {
-        return { success: false, error: "API base URL is not configured." };
-    }
-
-    const url = `${baseUrl}/api/1/vehicles/${vehicleId}/command/${command}`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({}), // Most simple commands require an empty JSON body
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            // Tesla API command errors are often in the response body
-            return { success: false, error: data.error || data.response?.reason || `Failed command: HTTP ${response.status}` };
-        }
-
-        // Successful commands return a response object with a result field
-        if (data.response?.result !== true) {
-            return { success: false, error: data.response?.reason || 'Command failed unexpectedly.' };
-        }
-
-        return { success: true };
-
-    } catch (error) {
-        console.error(`Command ${command} fetch error:`, error);
-        return { success: false, error: `Failed to connect to Tesla servers for ${command}.` };
-    }
-}
-
-// NEW: Start Charging Command
-export async function startCharge(vehicleId: string) {
-    return sendVehicleCommand(vehicleId, 'charge_start');
-}
-
-// NEW: Stop Charging Command
-export async function stopCharge(vehicleId: string) {
-    return sendVehicleCommand(vehicleId, 'charge_stop');
-}
-
+// --- VEHICLE ACTIONS (READ) ---
+// ⚠️ FIX: These now hit TESLA_CLOUD_URL directly to avoid Proxy errors
 
 export async function getVehicles() {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-        console.error("Unauthorized: No access token found");
-        return null;
+  const accessToken = await getAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    // Reading list from Cloud (Reliable)
+    const response = await fetch(`${TESLA_CLOUD_URL}/api/1/vehicles`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({ error: "Unknown API error" }));
+      console.error('Get vehicles error:', errorBody);
+      return null;
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
-    if (!baseUrl) {
-        console.error("API base URL is not configured.");
-        return null;
-    }
+    const data = await response.json();
+    return data.response;
 
-    try {
-        const response = await fetch(`${baseUrl}/api/1/vehicles`,
-        {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-            },
-            cache: 'no-store',
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.json().catch(() => ({ error: "Unknown API error" }));
-            console.error('Get vehicles error:', errorBody);
-            return null;
-        }
-
-        const data = await response.json();
-        return data.response;
-
-    } catch (error) {
-        console.error("Get vehicles fetch error:", error);
-        return null;
-    }
+  } catch (error) {
+    console.error("Get vehicles fetch error:", error);
+    return null;
+  }
 }
 
 export async function getVehicleData(vehicleId: string) {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-        return { success: false, error: "Unauthorized" };
+  const accessToken = await getAccessToken();
+  if (!accessToken) return { success: false, error: "Unauthorized" };
+
+  try {
+    // Check status from Cloud
+    const initialResponse = await fetch(`${TESLA_CLOUD_URL}/api/1/vehicles/${vehicleId}`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      cache: 'no-store',
+    });
+
+    if (!initialResponse.ok) return { success: false, error: "Failed to fetch status" };
+    const vehicle = (await initialResponse.json()).response;
+
+    if (vehicle.state !== 'online') {
+      return { success: false, error: `Vehicle is ${vehicle.state}` };
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
-    if (!baseUrl) {
-        return { success: false, error: "API base URL is not configured." };
+    // Get data from Cloud
+    const response = await fetch(`${TESLA_CLOUD_URL}/api/1/vehicles/${vehicleId}/vehicle_data`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      cache: 'no-store', 
+    });
+
+    if (!response.ok) return { success: false, error: "API Error" };
+    
+    const data = await response.json();
+    return { success: true, data: data.response };
+
+  } catch (error) {
+    return { success: false, error: "Network Error" };
+  }
+}
+
+// --- VEHICLE COMMANDS (WRITE) ---
+// ⚠️ FIX: Only commands go through the Proxy
+
+async function sendVehicleCommand(vehicleId: string, command: string) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return { success: false, error: "Unauthorized" };
+
+  // Use the local proxy URL from environment for signing
+  const proxyUrl = process.env.NEXT_PUBLIC_TESLA_API_BASE_URL;
+  if (!proxyUrl) return { success: false, error: "Proxy URL not configured" };
+
+  const url = `${proxyUrl}/api/1/vehicles/${vehicleId}/command/${command}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({}), 
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: data.error || `Proxy Error ${response.status}` };
     }
 
-    try {
-        // First, get the vehicle's basic information to check its state
-        const initialResponse = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}`,
-        {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-            },
-            cache: 'no-store',
-        });
-
-        if (!initialResponse.ok) {
-            const errorBody = await initialResponse.json().catch(() => ({}));
-            return { success: false, error: errorBody.error || `Failed to fetch vehicle status. Status: ${initialResponse.status}` };
-        }
-
-        const vehicle = (await initialResponse.json()).response;
-
-        // If the vehicle is not online, return its state instead of trying to wake it
-        if (vehicle.state !== 'online') {
-            return { success: false, error: `Vehicle is ${vehicle.state}` };
-        }
-
-        // Now that the vehicle is awake, fetch the full data combo
-        const response = await fetch(`${baseUrl}/api/1/vehicles/${vehicleId}/vehicle_data`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-            },
-            cache: 'no-store', 
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.json().catch(() => ({ error: "Unknown API error" }));
-            return { success: false, error: errorBody.error || "Unknown API error" };
-        }
-        
-        const data = await response.json();
-        return { success: true, data: data.response };
-
-    } catch (error) {
-        console.error("Get vehicle data fetch error:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return { success: false, error: `Failed to fetch vehicle data. Reason: ${errorMessage}` };
+    if (data.response?.result !== true) {
+      return { success: false, error: data.response?.reason || 'Command failed' };
     }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error(`Command ${command} error:`, error);
+    return { success: false, error: "Proxy Connection Failed" };
+  }
+}
+
+export async function startCharge(vehicleId: string) {
+  return sendVehicleCommand(vehicleId, 'charge_start');
+}
+
+export async function stopCharge(vehicleId: string) {
+  return sendVehicleCommand(vehicleId, 'charge_stop');
 }
