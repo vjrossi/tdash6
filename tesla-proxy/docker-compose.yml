@@ -1,0 +1,13 @@
+# tesla-proxy/docker-compose.yml
+version: '3.8'
+
+services:
+  proxy:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      # These are optional for simple signing but good practice to include
+      - TESLA_CLIENT_ID=${NEXT_PUBLIC_TESLA_CLIENT_ID}
+      - TESLA_CLIENT_SECRET=${TESLA_CLIENT_SECRET}
+    restart: always
