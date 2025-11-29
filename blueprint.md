@@ -91,28 +91,29 @@ Modern Tesla vehicles (Model 3/Y, 2021+ S/X) require End-to-End Authentication (
 ### The Solution: Split Routing & Proxy
 We use a "Sidecar" architecture where the Next.js app delegates signing to a local Go-based proxy.
 
-1.  **Reads (`getVehicleData`):** Next.js -> Tesla Cloud API (Direct).
+1.  **Reads (getVehicleData, getVehicles):** Next.js -> Tesla Cloud API (Direct).
     * *Reason:* The Proxy is unreliable for reading lists/data; direct cloud access is stable.
-2.  **Writes (`startCharge`):** Next.js -> Local Proxy -> Tesla Cloud -> Vehicle.
+2.  **Writes (startCharge, stopCharge):** Next.js -> Local Proxy -> Tesla Cloud -> Vehicle.
     * *Reason:* The Proxy handles EC key signing automatically.
+    * *Data Field:* Commands (Start/Stop Charge) MUST use the **VIN**, not the internal `id_s`.
 
 ### Infrastructure Setup (`/tesla-proxy`)
 * **Container:** Official `teslamotors/vehicle-command` proxy running in Docker.
 * **Security:**
     * Uses **Self-Signed SSL** (generated via OpenSSL in Dockerfile) to prevent "open file" crashes on startup.
-    * Requires `private-key.pem` (EC Private Key) and `public-key.pem` inside the folder.
+    * Requires `private-key.pem` (EC Private Key) inside the container.
 * **Command:** `docker compose up --build`.
 * **Port:** Exposes `https://localhost:8080`.
 
-### Domain Validation & Pairing (Critical Setup)
-These steps are performed **once** to establish trust between the car and the app. They are NOT stored in the repository.
+### Domain Validation & Pairing (Critical External Setup)
+These steps are performed **once** to establish trust between the car and the app.
 
-1.  **Host Public Key:** The `public-key.pem` file must be hosted on the domain registered with Tesla at:
+1.  **Host Public Key (External Requirement):** The `public-key.pem` is **NOT hosted by this Next.js app**. It must be hosted separately (e.g., on a static file server or CDN) at the registered domain's well-known path:
     `https://<your-domain>/.well-known/appspecific/com.tesla.3p.public-key.pem`
 2.  **Register:** The domain and key were registered via the Tesla Developer API `register` endpoint.
 3.  **Vehicle Pairing (The "Magic Link"):** To authorize the app to send commands to a specific vehicle, the owner must open the following link on a mobile device with the Tesla App installed:
     `https://www.tesla.com/_ak/<your-domain>`
-    * This process "enrolls" the app's public key onto the vehicle's keychain, allowing the vehicle to trust commands signed by the proxy.
+    * This process successfully **"enrolled"** the app's public key onto the vehicle's keychain, resolving the "public key has not been paired" error.
 
 ### Environment Configuration (`.env.local`)
 To make Next.js talk to this self-signed local proxy:
