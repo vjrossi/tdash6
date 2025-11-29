@@ -104,7 +104,7 @@ export function VehicleCard({ vehicle, onRefresh }: VehicleCardProps) {
         const action = command === 'start' ? startCharge : stopCharge;
         
         try {
-            const result = await action(vehicle.id_s);
+            const result = await action(vehicle.vin);
             
             if (result.success) {
                 setCommandStatus({ 

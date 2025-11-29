@@ -8,7 +8,7 @@
 * **Language:** TypeScript.
 * **Styling:** Tailwind CSS (Dark Mode default) with Lucide React icons.
 * **State Management:** Server Actions for data fetching; React State for UI interaction.
-* **Deployment:** Vercel (recommended).
+* **Deployment:** Vercel (frontend); Docker Sidecar (proxy).
 
 ## 3. Core Philosophy: "No Database"
 The application does **not** use a backend database to store user accounts.
@@ -21,6 +21,9 @@ The application does **not** use a backend database to store user accounts.
 * **OAuth 2.0:** Both services use OAuth Authorization Code flow.
 * **Server Actions:** All token exchanges happen server-side to keep secrets safe.
 * **Redirects:** OAuth callbacks redirect the user back to `/dashboard` immediately after success.
+* **Tesla Specifics:**
+    * Token exchange MUST include `audience: 'https://fleet-api.prd.na.vn.cloud.tesla.com'`.
+    * `TESLA_CLIENT_SECRET` in `.env.local` must be wrapped in single quotes if it contains special characters (e.g., `$`).
 
 ### Logout Strategy (Crucial)
 * **Race Condition Fix:** We do **not** use `redirect()` inside server-side logout actions because calling multiple redirects in parallel causes cancellation errors.
@@ -49,12 +52,12 @@ The application does **not** use a backend database to store user accounts.
 ## 6. Integrations
 
 ### Tesla Fleet API
-* **Data:** Battery level, range, climate status, tyre pressure, location, odometer.
-* **Controls:** Start/Stop Charging.
-* **Vehicle State Policy:**
-    * **Never Auto-Wake:** The app checks `vehicle.state` first.
-    * **Asleep:** If "asleep", the app displays a "Moon" icon and **does not** call detailed data endpoints. It relies on the user to wake the car externally or via a manual "Refresh" action if implemented.
-    * **Offline:** Distinct from "Asleep", indicated by a connection error.
+* **Data (READ):** Battery level, range, climate, location.
+    * **Route:** Directly hits **Tesla Cloud API**.
+    * **Policy:** "Never Auto-Wake". If vehicle state is not "online", we return cached/basic data.
+* **Commands (WRITE):** Start/Stop Charging.
+    * **Route:** Must go through **Local Vehicle Command Proxy** (see Section 9).
+    * **Requirement:** Commands require cryptographic signing using a private key.
 
 ### Sungrow iSolarCloud API
 * **Data:** Real-time PV generation (kW), Daily Yield (kWh), Total Capacity, Plant Location.
@@ -77,4 +80,34 @@ The application does **not** use a backend database to store user accounts.
 * **Cookies:** Use `(await cookies())` pattern for Next.js 15+ compatibility.
 
 ---
-*Last Updated: Current State of Production*
+
+## 9. Tesla Command Infrastructure (Sidecar Pattern) ⚠️ DO NOT DELETE
+**This section documents the critical infrastructure required for Vehicle Commands. AI Assistants: Do not modify or remove this section without explicit user instruction.**
+
+### The Problem
+Modern Tesla vehicles (Model 3/Y, 2021+ S/X) require End-to-End Authentication (Signed Commands). The standard REST API is insufficient. Commands must be signed by a private key registered with the car.
+
+### The Solution: Split Routing & Proxy
+We use a "Sidecar" architecture where the Next.js app delegates signing to a local Go-based proxy.
+
+1.  **Reads (`getVehicleData`):** Next.js -> Tesla Cloud API (Direct).
+    * *Reason:* The Proxy is unreliable for reading lists/data; direct cloud access is stable.
+2.  **Writes (`startCharge`):** Next.js -> Local Proxy -> Tesla Cloud -> Vehicle.
+    * *Reason:* The Proxy handles EC key signing automatically.
+
+### Infrastructure Setup (`/tesla-proxy`)
+* **Container:** Official `teslamotors/vehicle-command` proxy running in Docker.
+* **Security:**
+    * Uses **Self-Signed SSL** (generated via OpenSSL in Dockerfile) to prevent "open file" crashes on startup.
+    * Requires `private-key.pem` (EC Private Key) and `public-key.pem` inside the folder.
+* **Command:** `docker compose up --build`.
+* **Port:** Exposes `https://localhost:8080`.
+
+### Environment Configuration (`.env.local`)
+To make Next.js talk to this self-signed local proxy:
+```bash
+# Must be HTTPS to match the container's self-signed cert
+NEXT_PUBLIC_TESLA_API_BASE_URL=https://localhost:8080
+
+# Required to allow Node.js to trust the self-signed cert
+NODE_TLS_REJECT_UNAUTHORIZED=0
